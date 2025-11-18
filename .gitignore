@@ -1,0 +1,40 @@
+# Data folder
+data/
+venv311/
+# 코드 분석 문서
+코드_분석.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Model files (if large)
+*.h5
+*.pth
+*.pt
+*.ckpt
+
+# Logs
+*.log
+

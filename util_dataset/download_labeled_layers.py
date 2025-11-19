@@ -74,6 +74,12 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Maximum number of labeled layers to download per database.",
     )
     parser.add_argument(
+        "--total-limit",
+        type=int,
+        default=10000,
+        help="Maximum total number of labeled layers to download across all databases (default: 10000).",
+    )
+    parser.add_argument(
         "--metadata",
         action="store_true",
         help="Persist document metadata alongside each downloaded image.",
@@ -177,6 +183,8 @@ def write_metadata(target_path: Path, document: Dict) -> None:
         json.dump(doc_copy, f, indent=2, ensure_ascii=False)
 
 
+
+
 def download_for_db(
     db_name: str,
     db,
@@ -187,7 +195,9 @@ def download_for_db(
     persist_metadata: bool,
     dry_run: bool,
     debug: bool = False,
-) -> DownloadResult:
+    total_downloaded: int = 0,
+    total_limit: Optional[int] = None,
+) -> Tuple[DownloadResult, int]:
     result = DownloadResult()
     collection: Collection = db["LayersModelDB"]
 
@@ -215,13 +225,33 @@ def download_for_db(
         except Exception as e:
             print(f"[DEBUG] Could not count GridFS files: {e}")
 
+    # 전체 제한이 있는 경우, 남은 개수만큼만 다운로드
+    remaining_limit = None
+    if total_limit is not None:
+        remaining_limit = max(0, total_limit - total_downloaded)
+        if remaining_limit == 0:
+            print(f"[{db_name}] Total limit reached. Skipping this database.")
+            return result, total_downloaded
+    
+    # 데이터베이스별 제한과 전체 제한 중 작은 값 사용
+    effective_limit = limit
+    if remaining_limit is not None:
+        if effective_limit is None:
+            effective_limit = remaining_limit
+        else:
+            effective_limit = min(effective_limit, remaining_limit)
+    
     cursor = (
         collection.find(truthy_filter(), sort=[("LayerNum", 1)])
-        if limit is None
-        else collection.find(truthy_filter(), sort=[("LayerNum", 1)]).limit(limit)
+        if effective_limit is None
+        else collection.find(truthy_filter(), sort=[("LayerNum", 1)]).limit(effective_limit)
     )
 
     for doc in cursor:
+        # 전체 제한 체크
+        if total_limit is not None and total_downloaded >= total_limit:
+            print(f"[{db_name}] Total limit ({total_limit}) reached. Stopping download.")
+            break
         layer_num = doc.get("LayerNum")
         layer_idx = doc.get("LayerIdx")
         extension = doc.get("Extension", "jpg").lstrip(".")
@@ -286,14 +316,15 @@ def download_for_db(
         saved = write_bytes(target_path, content, overwrite)
         if saved:
             result.downloaded += 1
-            print(f"[{db_name}] Saved {target_path}")
+            total_downloaded += 1
+            print(f"[{db_name}] Saved {target_path} ({total_downloaded}/{total_limit if total_limit else 'unlimited'})")
             if persist_metadata:
                 write_metadata(target_path, doc)
         else:
             result.skipped_existing += 1
             print(f"[{db_name}] Skipped existing {target_path}")
 
-    return result
+    return result, total_downloaded
 
 
 def main(argv: Optional[Sequence[str]] = None) -> None:
@@ -309,7 +340,9 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         return
 
     print(f"Processing {len(db_names)} database(s): {', '.join(db_names)}")
+    print(f"Total download limit: {args.total_limit}")
     total = DownloadResult()
+    total_downloaded = 0
 
     for db_name in db_names:
         print(f"\n==> Database: {db_name}")
@@ -318,7 +351,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         if not fs:
             continue
 
-        result = download_for_db(
+        result, total_downloaded = download_for_db(
             db_name=db_name,
             db=db,
             fs=fs,
@@ -328,16 +361,26 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             persist_metadata=args.metadata,
             dry_run=args.dry_run,
             debug=args.debug,
+            total_downloaded=total_downloaded,
+            total_limit=args.total_limit,
         )
         total.extend(result)
+        
+        # 전체 제한에 도달했으면 중단
+        if args.total_limit is not None and total_downloaded >= args.total_limit:
+            print(f"\nTotal limit ({args.total_limit}) reached. Stopping download.")
+            break
 
-    print("\nSummary")
-    print("-------")
+    print("\n" + "=" * 60)
+    print("Download Summary")
+    print("=" * 60)
     print(f"Downloaded: {total.downloaded}")
     print(f"Skipped existing: {total.skipped_existing}")
+    print(f"Total downloaded: {total_downloaded}")
     if total.missing_layers:
         print(f"Missing layers: {len(total.missing_layers)}")
-        print("Layer numbers:", total.missing_layers)
+        if len(total.missing_layers) <= 10:
+            print("Layer numbers:", total.missing_layers)
     if total.missing_layers_with_docs:
         print(
             f"Docs without GridFS data: {len(total.missing_layers_with_docs)}"

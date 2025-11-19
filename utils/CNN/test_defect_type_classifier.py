@@ -30,7 +30,7 @@ except ImportError:
 
 # utils 모듈 import
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.defect_type_classifier import (
+from utils.CNN.defect_type_classifier import (
     DefectTypeDataset, 
     DefectTypeClassifier,
     analyze_defect_types,

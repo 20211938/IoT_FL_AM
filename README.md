@@ -181,7 +181,7 @@ python utils/Dataset/cleanup_dataset.py --data-dir data/labeled_layers
 정리된 데이터로 결함 유형 분류 모델을 학습합니다.
 
 ```bash
-python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers --metadata
+python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers
 ```
 
 **결과**: `checkpoints/` 디렉토리에 최적 모델이 저장됩니다.
@@ -193,8 +193,7 @@ python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers --meta
 ```bash
 python utils/CNN/test_defect_type_classifier.py \
     --checkpoint checkpoints/best_model.pth \
-    --data-dir data/labeled_layers \
-    --metadata
+    --data-dir data/labeled_layers
 ```
 
 **결과**: 정확도, 혼동 행렬 등 평가 결과가 출력됩니다.
@@ -365,13 +364,12 @@ min_count = 10          # 최소 샘플 수 (이보다 적으면 클래스 제�
 
 ```bash
 # 기본 사용
-python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers --metadata
+python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers
 
 # 모델 테스트
 python utils/CNN/test_defect_type_classifier.py \
     --checkpoint checkpoints/best_model.pth \
-    --data-dir data/labeled_layers \
-    --metadata
+    --data-dir data/labeled_layers
 ```
 
 ### 평가 지표
@@ -488,7 +486,6 @@ python utils/Dataset/analyze_defect_types.py --data-dir data/labeled_layers
 # 4. 결함 분류 모델 학습
 python utils/CNN/defect_type_classifier.py \
     --data-dir data/labeled_layers \
-    --metadata \
     --epochs 20 \
     --batch-size 16 \
     --min-count 30
@@ -496,8 +493,7 @@ python utils/CNN/defect_type_classifier.py \
 # 5. 모델 테스트
 python utils/CNN/test_defect_type_classifier.py \
     --checkpoint checkpoints/best_model.pth \
-    --data-dir data/labeled_layers \
-    --metadata
+    --data-dir data/labeled_layers
 ```
 
 ### 픽셀 단위 결함 탐지 (연합 학습)

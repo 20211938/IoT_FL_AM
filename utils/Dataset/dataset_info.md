@@ -101,19 +101,19 @@ data/labeled_layers/
 ### 데이터 다운로드
 ```bash
 # MongoDB에서 데이터 다운로드 (최대 10,000개)
-python util_dataset/download_labeled_layers.py --metadata
+python utils/Dataset/download_labeled_layers.py --metadata
 ```
 
 ### 데이터셋 정리
 ```bash
 # 소수 클래스 및 의미 없는 이름 제거
-python util_dataset/cleanup_dataset.py --data-dir data/labeled_layers
+python utils/Dataset/cleanup_dataset.py --data-dir data/labeled_layers
 ```
 
 ### 데이터셋 분석
 ```bash
 # 결함 유형 분석
-python util_dataset/analyze_defect_types.py --data-dir data/labeled_layers
+python utils/Dataset/analyze_defect_types.py --data-dir data/labeled_layers
 ```
 
 ## 학습 권장 사항 (Training Recommendations)

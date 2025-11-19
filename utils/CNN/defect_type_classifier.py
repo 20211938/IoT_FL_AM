@@ -295,8 +295,27 @@ def train_defect_classifier(data_dir: str, epochs: int = 20, batch_size: int = 3
         generator=torch.Generator().manual_seed(42)
     )
     
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    # GPU 사용률 최적화를 위한 DataLoader 설정
+    # num_workers: 병렬 데이터 로딩 (CPU 코어 수에 맞게 조정, Windows에서는 0-4 권장)
+    # pin_memory: GPU 전송 최적화 (CUDA 사용 시 True 권장)
+    # persistent_workers: 워커 재사용으로 오버헤드 감소 (num_workers > 0일 때만)
+    num_workers = 4 if torch.cuda.is_available() else 0
+    train_loader = DataLoader(
+        train_dataset, 
+        batch_size=batch_size, 
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=torch.cuda.is_available(),
+        persistent_workers=num_workers > 0
+    )
+    val_loader = DataLoader(
+        val_dataset, 
+        batch_size=batch_size, 
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=torch.cuda.is_available(),
+        persistent_workers=num_workers > 0
+    )
     
     print(f"\n[데이터 분할]")
     print(f"  - 학습: {len(train_dataset)}개")

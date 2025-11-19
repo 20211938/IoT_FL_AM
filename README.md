@@ -20,12 +20,18 @@ FLAM/
 │   ├── unet.py                       # U-Net 모델 정의
 │   ├── federated_averaging.py        # FedAvg 연합 학습 알고리즘
 │   ├── visualization.py              # 결과 시각화 및 평가
-│   ├── defect_type_classifier.py     # 결함 유형 분류 모델 학습
-│   └── test_defect_type_classifier.py # 결함 분류 모델 테스트
-├── util_dataset/
-│   ├── download_labeled_layers.py    # MongoDB에서 레이블된 이미지 다운로드
-│   ├── cleanup_dataset.py            # 데이터셋 정리 및 소수 클래스 제거
-│   └── analyze_defect_types.py       # 결함 유형 분석
+│   ├── CNN/
+│   │   ├── defect_type_classifier.py     # 결함 유형 분류 모델 학습
+│   │   ├── test_defect_type_classifier.py # 결함 분류 모델 테스트
+│   │   └── test_results_analysis.md      # 테스트 결과 분석
+│   ├── AprilGAN/
+│   │   ├── zero_shot_defect_classifier.py # 제로샷 결함 분류 모델
+│   │   └── test_zero_shot_classifier.py   # 제로샷 모델 테스트
+│   └── Dataset/
+│       ├── download_labeled_layers.py    # MongoDB에서 레이블된 이미지 다운로드
+│       ├── cleanup_dataset.py            # 데이터셋 정리 및 소수 클래스 제거
+│       ├── analyze_defect_types.py       # 결함 유형 분석
+│       └── dataset_info.md               # 데이터셋 정보 문서
 └── data/                             # 이미지 데이터 저장소
     └── labeled_layers/               # 다운로드된 레이블된 이미지
 ```
@@ -104,7 +110,7 @@ w_global = 0.5 * w_client1 + 0.25 * w_client2 + 0.25 * w_client3
 
 **역할**: 학습된 모델의 예측 결과 시각화 및 성능 평가
 
-### 6. `util_dataset/download_labeled_layers.py` - MongoDB 이미지 다운로드
+### 6. `utils/Dataset/download_labeled_layers.py` - MongoDB 이미지 다운로드
 
 **역할**: MongoDB GridFS에서 레이블된 레이어 이미지를 다운로드
 
@@ -115,7 +121,7 @@ w_global = 0.5 * w_client1 + 0.25 * w_client2 + 0.25 * w_client3
 - 메타데이터 JSON 파일 저장 (선택사항)
 - 전체 다운로드 제한 설정 (기본값: 10,000개)
 
-### 7. `util_dataset/cleanup_dataset.py` - 데이터셋 정리
+### 7. `utils/Dataset/cleanup_dataset.py` - 데이터셋 정리
 
 **역할**: 다운로드된 데이터셋에서 소수 클래스 및 의미 없는 이름 제거
 
@@ -125,7 +131,7 @@ w_global = 0.5 * w_client1 + 0.25 * w_client2 + 0.25 * w_client3
 - 의미 없는 이름 감지 및 제거 (숫자만, D1/D2 패턴, 2자 이하)
 - DRY RUN 모드 지원
 
-### 8. `utils/defect_type_classifier.py` - 결함 유형 분류 모델
+### 8. `utils/CNN/defect_type_classifier.py` - 결함 유형 분류 모델
 
 **역할**: 특정 결함 유형을 분류하는 CNN 모델 학습
 
@@ -134,6 +140,15 @@ w_global = 0.5 * w_client1 + 0.25 * w_client2 + 0.25 * w_client3
 - CNN 기반 다중 클래스 분류 모델
 - 학습/검증 데이터 분할
 - 체크포인트 저장 및 최적 모델 선택
+
+### 9. `utils/AprilGAN/zero_shot_defect_classifier.py` - 제로샷 결함 분류 모델
+
+**역할**: AprilGAN 기반 제로샷 결함 분류 모델
+
+**주요 기능**:
+- GAN 기반 이상 탐지
+- 전처리 없이 결함 분류
+- 제로샷 학습 지원
 
 ---
 
@@ -146,7 +161,7 @@ w_global = 0.5 * w_client1 + 0.25 * w_client2 + 0.25 * w_client3
 MongoDB에서 레이블된 이미지를 다운로드합니다 (최대 10,000개).
 
 ```bash
-python util_dataset/download_labeled_layers.py --metadata
+python utils/Dataset/download_labeled_layers.py --metadata
 ```
 
 **결과**: `data/labeled_layers/` 디렉토리에 이미지 파일과 메타데이터 JSON 파일이 저장됩니다.
@@ -156,7 +171,7 @@ python util_dataset/download_labeled_layers.py --metadata
 다운로드된 데이터에서 소수 클래스(1% 미만) 및 의미 없는 이름을 제거합니다.
 
 ```bash
-python util_dataset/cleanup_dataset.py --data-dir data/labeled_layers
+python utils/Dataset/cleanup_dataset.py --data-dir data/labeled_layers
 ```
 
 **결과**: 학습에 적합한 데이터만 남게 됩니다.
@@ -166,7 +181,7 @@ python util_dataset/cleanup_dataset.py --data-dir data/labeled_layers
 정리된 데이터로 결함 유형 분류 모델을 학습합니다.
 
 ```bash
-python utils/defect_type_classifier.py --data-dir data/labeled_layers --metadata
+python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers --metadata
 ```
 
 **결과**: `checkpoints/` 디렉토리에 최적 모델이 저장됩니다.
@@ -176,7 +191,7 @@ python utils/defect_type_classifier.py --data-dir data/labeled_layers --metadata
 학습된 모델의 성능을 평가합니다.
 
 ```bash
-python utils/test_defect_type_classifier.py \
+python utils/CNN/test_defect_type_classifier.py \
     --checkpoint checkpoints/best_model.pth \
     --data-dir data/labeled_layers \
     --metadata
@@ -350,10 +365,10 @@ min_count = 10          # 최소 샘플 수 (이보다 적으면 클래스 제�
 
 ```bash
 # 기본 사용
-python utils/defect_type_classifier.py --data-dir data/labeled_layers --metadata
+python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers --metadata
 
 # 모델 테스트
-python utils/test_defect_type_classifier.py \
+python utils/CNN/test_defect_type_classifier.py \
     --checkpoint checkpoints/best_model.pth \
     --data-dir data/labeled_layers \
     --metadata
@@ -373,26 +388,26 @@ python utils/test_defect_type_classifier.py \
 
 ```
 1. 데이터 다운로드
-   └─ download_labeled_layers.py: MongoDB에서 레이블된 이미지 다운로드 (최대 10,000개)
+   └─ utils/Dataset/download_labeled_layers.py: MongoDB에서 레이블된 이미지 다운로드 (최대 10,000개)
    
 2. 데이터셋 정리
-   └─ cleanup_dataset.py: 소수 클래스 및 의미 없는 이름 제거
+   └─ utils/Dataset/cleanup_dataset.py: 소수 클래스 및 의미 없는 이름 제거
       ├─ 비율 기반 필터링 (1% 미만)
       ├─ 의미 없는 이름 제거 (숫자만, D1/D2 패턴)
       └─ 정리된 데이터셋 생성
    
 3. 결함 유형 분석 (선택사항)
-   └─ analyze_defect_types.py: 데이터셋 통계 및 분포 분석
+   └─ utils/Dataset/analyze_defect_types.py: 데이터셋 통계 및 분포 분석
    
 4. 결함 분류 모델 학습
-   └─ defect_type_classifier.py: CNN 기반 다중 클래스 분류 모델 학습
+   └─ utils/CNN/defect_type_classifier.py: CNN 기반 다중 클래스 분류 모델 학습
       ├─ 메타데이터에서 결함 유형 추출
       ├─ 학습/검증 데이터 분할
       ├─ CNN 모델 학습
       └─ 최적 모델 체크포인트 저장
    
 5. 모델 테스트
-   └─ test_defect_type_classifier.py: 학습된 모델 평가
+   └─ utils/CNN/test_defect_type_classifier.py: 학습된 모델 평가
       ├─ 정확도 계산
       ├─ 혼동 행렬 생성
       └─ 오분류 분석
@@ -402,7 +417,7 @@ python utils/test_defect_type_classifier.py \
 
 ```
 1. 데이터 준비
-   └─ download_labeled_layers.py: MongoDB에서 레이블된 이미지 다운로드
+   └─ utils/Dataset/download_labeled_layers.py: MongoDB에서 레이블된 이미지 다운로드
    
 2. 이미지 전처리
    └─ image_processing.py: 이미지를 128×128 타일로 분할
@@ -462,16 +477,16 @@ LOCAL_LEARNING_RATE = 8e-05       # 로컬 학습률
 
 ```bash
 # 1. 데이터 다운로드
-python util_dataset/download_labeled_layers.py --metadata
+python utils/Dataset/download_labeled_layers.py --metadata
 
 # 2. 데이터셋 정리
-python util_dataset/cleanup_dataset.py --data-dir data/labeled_layers --min-count 30
+python utils/Dataset/cleanup_dataset.py --data-dir data/labeled_layers --min-count 30
 
 # 3. 결함 유형 분석 (선택사항)
-python util_dataset/analyze_defect_types.py --data-dir data/labeled_layers
+python utils/Dataset/analyze_defect_types.py --data-dir data/labeled_layers
 
 # 4. 결함 분류 모델 학습
-python utils/defect_type_classifier.py \
+python utils/CNN/defect_type_classifier.py \
     --data-dir data/labeled_layers \
     --metadata \
     --epochs 20 \
@@ -479,7 +494,7 @@ python utils/defect_type_classifier.py \
     --min-count 30
 
 # 5. 모델 테스트
-python utils/test_defect_type_classifier.py \
+python utils/CNN/test_defect_type_classifier.py \
     --checkpoint checkpoints/best_model.pth \
     --data-dir data/labeled_layers \
     --metadata
@@ -489,7 +504,7 @@ python utils/test_defect_type_classifier.py \
 
 ```python
 # 1. 데이터 준비 (선택사항 - MongoDB에서 다운로드)
-# python util_dataset/download_labeled_layers.py --output data/labeled_layers
+# python utils/Dataset/download_labeled_layers.py --output data/labeled_layers
 
 # 2. 데이터셋 생성
 datasetImageDict, datasetMaskDict = create_dataset(
@@ -581,14 +596,14 @@ compare_results_testset(
 ## 🎯 요약
 
 ### 결함 분류 모델 (새로운 방식)
-1. **MongoDB에서 레이블된 이미지 다운로드** (`util_dataset/download_labeled_layers.py`)
-2. **데이터셋 정리** - 소수 클래스 및 의미 없는 이름 제거 (`util_dataset/cleanup_dataset.py`)
-3. **결함 유형 분석** - 데이터셋 통계 확인 (`util_dataset/analyze_defect_types.py`)
-4. **CNN 모델 학습** - 결함 유형 분류 모델 학습 (`utils/defect_type_classifier.py`)
-5. **모델 테스트** - 학습된 모델 평가 (`utils/test_defect_type_classifier.py`)
+1. **MongoDB에서 레이블된 이미지 다운로드** (`utils/Dataset/download_labeled_layers.py`)
+2. **데이터셋 정리** - 소수 클래스 및 의미 없는 이름 제거 (`utils/Dataset/cleanup_dataset.py`)
+3. **결함 유형 분석** - 데이터셋 통계 확인 (`utils/Dataset/analyze_defect_types.py`)
+4. **CNN 모델 학습** - 결함 유형 분류 모델 학습 (`utils/CNN/defect_type_classifier.py`)
+5. **모델 테스트** - 학습된 모델 평가 (`utils/CNN/test_defect_type_classifier.py`)
 
 ### 픽셀 단위 결함 탐지 (기존 방식)
-1. **MongoDB에서 레이블된 이미지 다운로드** (`util_dataset/download_labeled_layers.py`)
+1. **MongoDB에서 레이블된 이미지 다운로드** (`utils/Dataset/download_labeled_layers.py`)
 2. **이미지를 작은 조각으로 나눔** (128×128 타일) (`image_processing.py`)
 3. **각 공장별로 데이터 정리** (8개 클라이언트) (`dataset_functions.py`)
 4. **U-Net 모델 생성** (3클래스 분류) (`unet.py`)
@@ -643,7 +658,7 @@ scikit-learn   # 머신러닝 유틸리티 (테스트용)
 - `visualize_results_testset()`: 테스트셋 결과 시각화
 - `compare_results_testset()`: CL vs FL 모델 비교 시각화
 
-### `util_dataset/download_labeled_layers.py`
+### `utils/Dataset/download_labeled_layers.py`
 - `parse_args()`: 명령줄 인자 파싱
 - `build_client()`: MongoDB 클라이언트 생성
 - `resolve_databases()`: 처리할 DB 목록 결정
@@ -655,17 +670,17 @@ scikit-learn   # 머신러닝 유틸리티 (테스트용)
 - `download_for_db()`: DB별 이미지 다운로드
 - `main()`: 메인 실행 함수
 
-### `util_dataset/cleanup_dataset.py`
+### `utils/Dataset/cleanup_dataset.py`
 - `extract_defect_types_from_metadata()`: JSON 메타데이터에서 결함 유형 추출
 - `is_meaningless_name()`: 의미 없는 이름 확인
 - `cleanup_dataset()`: 데이터셋 정리 및 삭제 메인 함수
 - `main()`: CLI 인터페이스
 
-### `util_dataset/analyze_defect_types.py`
+### `utils/Dataset/analyze_defect_types.py`
 - `extract_defect_types_from_metadata()`: JSON 메타데이터에서 결함 유형 추출
 - `analyze_defect_dataset()`: 데이터셋의 결함 종류 분석
 
-### `utils/defect_type_classifier.py`
+### `utils/CNN/defect_type_classifier.py`
 - `extract_defect_types_from_metadata()`: 메타데이터에서 결함 유형 추출
 - `analyze_defect_types()`: 결함 유형 분석 및 매핑 생성
 - `DefectTypeDataset`: PyTorch 데이터셋 클래스
@@ -673,7 +688,15 @@ scikit-learn   # 머신러닝 유틸리티 (테스트용)
 - `train_defect_classifier()`: 모델 학습 함수
 - `main()`: 메인 실행 함수
 
-### `utils/test_defect_type_classifier.py`
+### `utils/CNN/test_defect_type_classifier.py`
 - `test_model()`: 모델 테스트 및 예측
 - `analyze_results()`: 결과 분석 및 통계
 - `visualize_results()`: 혼동 행렬 시각화
+
+### `utils/AprilGAN/zero_shot_defect_classifier.py`
+- `LabeledImageDataset`: 레이블된 이미지 데이터셋
+- `AprilGANGenerator`: GAN 생성자 모델
+- `AprilGANDiscriminator`: GAN 판별자 모델
+- `AprilGANZeroShotClassifier`: 제로샷 결함 분류 클래스
+- `train()`: 모델 학습 함수
+- `main()`: 메인 실행 함수

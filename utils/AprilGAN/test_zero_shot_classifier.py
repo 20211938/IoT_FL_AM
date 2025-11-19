@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 
 # utils 모듈 import
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.zero_shot_defect_classifier import AprilGANZeroShotClassifier, LabeledImageDataset
+from utils.AprilGAN.zero_shot_defect_classifier import AprilGANZeroShotClassifier, LabeledImageDataset
 
 
 def test_model(checkpoint_path=None, data_dir="data/labeled_layers", 

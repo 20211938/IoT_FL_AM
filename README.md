@@ -20,8 +20,14 @@ FLAM/
 │   ├── unet.py                       # U-Net 모델 정의
 │   ├── federated_averaging.py        # FedAvg 연합 학습 알고리즘
 │   ├── visualization.py              # 결과 시각화 및 평가
-│   └── download_labeled_layers.py   # MongoDB에서 레이블된 이미지 다운로드
+│   ├── defect_type_classifier.py     # 결함 유형 분류 모델 학습
+│   └── test_defect_type_classifier.py # 결함 분류 모델 테스트
+├── util_dataset/
+│   ├── download_labeled_layers.py    # MongoDB에서 레이블된 이미지 다운로드
+│   ├── cleanup_dataset.py            # 데이터셋 정리 및 소수 클래스 제거
+│   └── analyze_defect_types.py       # 결함 유형 분석
 └── data/                             # 이미지 데이터 저장소
+    └── labeled_layers/               # 다운로드된 레이블된 이미지
 ```
 
 ---
@@ -98,9 +104,301 @@ w_global = 0.5 * w_client1 + 0.25 * w_client2 + 0.25 * w_client3
 
 **역할**: 학습된 모델의 예측 결과 시각화 및 성능 평가
 
-### 6. `utils/download_labeled_layers.py` - MongoDB 이미지 다운로드
+### 6. `util_dataset/download_labeled_layers.py` - MongoDB 이미지 다운로드
+
+**역할**: MongoDB GridFS에서 레이블된 레이어 이미지를 다운로드
+
+**주요 기능**:
+- MongoDB 연결 및 데이터베이스 목록 조회
+- `IsLabeled=True`인 레이어만 필터링
+- GridFS에서 이미지 파일 다운로드
+- 메타데이터 JSON 파일 저장 (선택사항)
+- 전체 다운로드 제한 설정 (기본값: 10,000개)
+
+### 7. `util_dataset/cleanup_dataset.py` - 데이터셋 정리
+
+**역할**: 다운로드된 데이터셋에서 소수 클래스 및 의미 없는 이름 제거
+
+**주요 기능**:
+- 결함 유형별 통계 수집
+- 비율 기반 필터링 (기본값: 1% 미만 제거)
+- 의미 없는 이름 감지 및 제거 (숫자만, D1/D2 패턴, 2자 이하)
+- DRY RUN 모드 지원
+
+### 8. `utils/defect_type_classifier.py` - 결함 유형 분류 모델
+
+**역할**: 특정 결함 유형을 분류하는 CNN 모델 학습
+
+**주요 기능**:
+- 메타데이터에서 결함 유형 추출
+- CNN 기반 다중 클래스 분류 모델
+- 학습/검증 데이터 분할
+- 체크포인트 저장 및 최적 모델 선택
+
+---
+
+## 🚀 전체 실행 과정 (기본 설정)
+
+프로젝트를 처음부터 실행하는 전체 과정입니다. 모든 명령어는 기본 설정을 사용합니다.
+
+### 1단계: 데이터 다운로드
+
+MongoDB에서 레이블된 이미지를 다운로드합니다 (최대 10,000개).
+
+```bash
+python util_dataset/download_labeled_layers.py --metadata
+```
+
+**결과**: `data/labeled_layers/` 디렉토리에 이미지 파일과 메타데이터 JSON 파일이 저장됩니다.
+
+### 2단계: 데이터셋 정리
+
+다운로드된 데이터에서 소수 클래스(1% 미만) 및 의미 없는 이름을 제거합니다.
+
+```bash
+python util_dataset/cleanup_dataset.py --data-dir data/labeled_layers
+```
+
+**결과**: 학습에 적합한 데이터만 남게 됩니다.
+
+### 3단계: 결함 분류 모델 학습
+
+정리된 데이터로 결함 유형 분류 모델을 학습합니다.
+
+```bash
+python utils/defect_type_classifier.py --data-dir data/labeled_layers --metadata
+```
+
+**결과**: `checkpoints/` 디렉토리에 최적 모델이 저장됩니다.
+
+### 4단계: 모델 테스트
+
+학습된 모델의 성능을 평가합니다.
+
+```bash
+python utils/test_defect_type_classifier.py \
+    --checkpoint checkpoints/best_model.pth \
+    --data-dir data/labeled_layers \
+    --metadata
+```
+
+**결과**: 정확도, 혼동 행렬 등 평가 결과가 출력됩니다.
+
+---
+
+## 🔍 U-Net을 이용한 픽셀 단위 결함 탐지 (요약)
+
+### 개요
+
+U-Net 모델을 사용하여 이미지의 각 픽셀을 3가지 클래스로 분류합니다:
+- **파우더 (0)**: 파우더 영역
+- **부품 (1)**: 정상 부품 영역
+- **결함 (2)**: 결함 영역
+
+### 주요 특징
+
+- **연합 학습 (Federated Learning)**: 여러 공장의 데이터를 모으지 않고도 함께 학습
+- **픽셀 단위 분할**: 이미지의 각 픽셀을 개별적으로 분류
+- **타일링**: 큰 이미지를 128×128 타일로 분할하여 처리
+- **8개 클라이언트**: 7개 공장에서 학습, 1개 공장으로 테스트
+
+### 실행 방법
+
+```python
+# Jupyter Notebook에서 실행
+# Federated_learning.ipynb 파일 참조
+```
+
+### 하이퍼파라미터
+
+```python
+SERVER_ROUNDS = 2                 # 서버 라운드 수
+LOCAL_EPOCHS = 5                  # 클라이언트당 로컬 에포크
+LOCAL_BATCH_SIZE = 32             # 배치 크기
+LOCAL_LEARNING_RATE = 8e-05       # 로컬 학습률
+tileSize = 128                    # 타일 크기
+```
+
+### 알고리즘 동작
+
+1. 각 클라이언트에서 로컬 학습 수행
+2. 서버에서 가중치를 데이터 비율로 가중 평균
+3. 글로벌 모델 업데이트
+4. 반복 (SERVER_ROUNDS만큼)
+
+---
+
+## 🎓 결함 분류 모델 상세 설명
+
+### 개요
+
+결함 분류 모델은 이미지 전체를 입력받아 **어떤 종류의 결함인지**를 분류하는 CNN 기반 다중 클래스 분류 모델입니다. U-Net과 달리 픽셀 단위가 아닌 이미지 단위로 결함 유형을 판단합니다.
+
+### 데이터셋 구조
+
+#### 디렉토리 구조
+
+```
+data/labeled_layers/
+├── {database_name}/              # 데이터베이스별 디렉토리
+│   ├── {db_name}_layer{num}_{id}.jpg      # 이미지 파일
+│   ├── {db_name}_layer{num}_{id}.jpg.json # 메타데이터 파일
+│   └── ...
+└── ...
+```
+
+#### 파일 형식
+
+- **이미지 파일**: `.jpg` 형식의 레이어 이미지
+- **메타데이터 파일**: `.jpg.json` 형식의 JSON 파일
+  - 각 이미지에 대응하는 메타데이터
+  - 결함 유형 정보 포함
+
+#### 메타데이터 구조
+
+메타데이터 JSON 파일에는 다음 정보가 포함됩니다:
+
+```json
+{
+  "DepositionImageModel": {
+    "TagBoxes": [
+      {
+        "Name": "D1",
+        "Comment": "Super Elevation"
+      }
+    ]
+  },
+  "ScanningImageModel": {
+    "TagBoxes": [
+      {
+        "Name": "D2",
+        "Comment": "Recoater Streaking"
+      }
+    ]
+  }
+}
+```
+
+- `DepositionImageModel.TagBoxes`: Deposition 이미지의 결함 태그
+- `ScanningImageModel.TagBoxes`: Scanning 이미지의 결함 태그
+- 각 태그의 `Comment` 필드가 결함 유형으로 사용됩니다 (없으면 `Name` 사용)
+
+### 결함 종류 (Defect Types)
+
+현재 데이터셋에는 **6가지 결함 유형**이 있습니다:
+
+| 순위 | 결함 유형 | 샘플 수 | 비율 | 설명 |
+|------|----------|--------|------|------|
+| 1 | **Super Elevation** | 4,819개 | 41.1% | 표면이 정상보다 높게 솟아오른 결함 |
+| 2 | **Recoater Streaking** | 3,746개 | 31.9% | Recoater로 인한 스트리킹 결함 |
+| 3 | **Fail** | 1,141개 | 9.7% | 일반적인 실패 케이스 |
+| 4 | **Laser capture timing error** | 1,089개 | 9.3% | 레이저 캡처 타이밍 오류 |
+| 5 | **Reocater Streaking** | 615개 | 5.2% | Recoater 관련 스트리킹 결함 (Recoater와 다른 유형) |
+| 6 | **Recoater capture timing error** | 309개 | 2.6% | Recoater 캡처 타이밍 오류 |
+
+**참고사항**:
+- `Recoater Streaking`과 `Reocater Streaking`은 서로 다른 클래스입니다 (오타가 아닙니다)
+- 일부 이미지는 여러 결함 유형을 동시에 가질 수 있습니다
+- 총 샘플 수(11,719개)가 파일 수(9,665개)보다 많은 이유는 하나의 이미지가 여러 결함 유형을 포함할 수 있기 때문입니다
+
+### 데이터셋 통계
+
+- **전체 파일 수**: 9,665개
+- **결함 유형 수**: 6개
+- **총 샘플 수**: 11,719개 (중복 포함)
+- **클래스 불균형 비율**: 약 15.6:1 (Super Elevation vs Recoater capture timing error)
+
+### 모델 구조
+
+```
+입력: 이미지 (224×224×3)
+  ↓
+CNN 레이어
+  ├─ Conv2D + BatchNorm + ReLU
+  ├─ MaxPooling
+  ├─ Conv2D + BatchNorm + ReLU
+  ├─ MaxPooling
+  └─ ...
+  ↓
+Fully Connected 레이어
+  ↓
+Softmax
+  ↓
+출력: 결함 유형 클래스 확률 (6개 클래스)
+```
+
+### 학습 과정
+
+1. **메타데이터 파싱**: JSON 파일에서 결함 유형 추출
+2. **데이터 필터링**: 최소 샘플 수 미만인 클래스 제거 (기본값: 10개)
+3. **데이터 분할**: 학습 80% / 검증 20%
+4. **모델 초기화**: CNN 모델 생성
+5. **학습**: Adam 옵티마이저로 학습
+6. **검증**: 각 에포크마다 검증 정확도 확인
+7. **체크포인트 저장**: 최고 성능 모델 저장
+
+### 기본 하이퍼파라미터
+
+```python
+epochs = 20              # 학습 에포크 수
+batch_size = 16         # 배치 크기
+learning_rate = 0.001   # 학습률
+min_count = 10          # 최소 샘플 수 (이보다 적으면 클래스 제거)
+```
+
+### 실행 명령어
+
+```bash
+# 기본 사용
+python utils/defect_type_classifier.py --data-dir data/labeled_layers --metadata
+
+# 모델 테스트
+python utils/test_defect_type_classifier.py \
+    --checkpoint checkpoints/best_model.pth \
+    --data-dir data/labeled_layers \
+    --metadata
+```
+
+### 평가 지표
+
+- **전체 정확도**: 전체 예측 중 정확한 예측 비율
+- **클래스별 정확도**: 각 결함 유형별 정확도
+- **혼동 행렬**: 클래스 간 오분류 패턴 분석
+
+---
 
 ## 🔄 전체 워크플로우
+
+### A. 결함 분류 모델 학습 워크플로우 (새로운 방식)
+
+```
+1. 데이터 다운로드
+   └─ download_labeled_layers.py: MongoDB에서 레이블된 이미지 다운로드 (최대 10,000개)
+   
+2. 데이터셋 정리
+   └─ cleanup_dataset.py: 소수 클래스 및 의미 없는 이름 제거
+      ├─ 비율 기반 필터링 (1% 미만)
+      ├─ 의미 없는 이름 제거 (숫자만, D1/D2 패턴)
+      └─ 정리된 데이터셋 생성
+   
+3. 결함 유형 분석 (선택사항)
+   └─ analyze_defect_types.py: 데이터셋 통계 및 분포 분석
+   
+4. 결함 분류 모델 학습
+   └─ defect_type_classifier.py: CNN 기반 다중 클래스 분류 모델 학습
+      ├─ 메타데이터에서 결함 유형 추출
+      ├─ 학습/검증 데이터 분할
+      ├─ CNN 모델 학습
+      └─ 최적 모델 체크포인트 저장
+   
+5. 모델 테스트
+   └─ test_defect_type_classifier.py: 학습된 모델 평가
+      ├─ 정확도 계산
+      ├─ 혼동 행렬 생성
+      └─ 오분류 분석
+```
+
+### B. 픽셀 단위 결함 탐지 워크플로우 (기존 방식)
 
 ```
 1. 데이터 준비
@@ -154,21 +452,44 @@ LOCAL_EPOCHS = 5                  # 클라이언트당 로컬 에포크
 LOCAL_BATCH_SIZE = 32             # 배치 크기
 LOCAL_LEARNING_RATE = 8e-05       # 로컬 학습률
 
-# MongoDB 설정
-MONGODB_HOST = "keties.iptime.org"
-MONGODB_PORT = 50002
-MONGODB_USER = "KETI_readAnyDB"
-MONGODB_PASSWORD = "madcoder"
-MONGODB_AUTH_DB = "admin"
 ```
 
 ---
 
-## 💻 노트북 실행 순서
+## 💻 실행 가이드
+
+### 결함 분류 모델 학습 (권장)
+
+```bash
+# 1. 데이터 다운로드
+python util_dataset/download_labeled_layers.py --metadata
+
+# 2. 데이터셋 정리
+python util_dataset/cleanup_dataset.py --data-dir data/labeled_layers --min-count 30
+
+# 3. 결함 유형 분석 (선택사항)
+python util_dataset/analyze_defect_types.py --data-dir data/labeled_layers
+
+# 4. 결함 분류 모델 학습
+python utils/defect_type_classifier.py \
+    --data-dir data/labeled_layers \
+    --metadata \
+    --epochs 20 \
+    --batch-size 16 \
+    --min-count 30
+
+# 5. 모델 테스트
+python utils/test_defect_type_classifier.py \
+    --checkpoint checkpoints/best_model.pth \
+    --data-dir data/labeled_layers \
+    --metadata
+```
+
+### 픽셀 단위 결함 탐지 (연합 학습)
 
 ```python
 # 1. 데이터 준비 (선택사항 - MongoDB에서 다운로드)
-# python utils/download_labeled_layers.py --output data/labeled_layers
+# python util_dataset/download_labeled_layers.py --output data/labeled_layers
 
 # 2. 데이터셋 생성
 datasetImageDict, datasetMaskDict = create_dataset(
@@ -259,7 +580,15 @@ compare_results_testset(
 
 ## 🎯 요약
 
-1. **MongoDB에서 레이블된 이미지 다운로드** (`download_labeled_layers.py`)
+### 결함 분류 모델 (새로운 방식)
+1. **MongoDB에서 레이블된 이미지 다운로드** (`util_dataset/download_labeled_layers.py`)
+2. **데이터셋 정리** - 소수 클래스 및 의미 없는 이름 제거 (`util_dataset/cleanup_dataset.py`)
+3. **결함 유형 분석** - 데이터셋 통계 확인 (`util_dataset/analyze_defect_types.py`)
+4. **CNN 모델 학습** - 결함 유형 분류 모델 학습 (`utils/defect_type_classifier.py`)
+5. **모델 테스트** - 학습된 모델 평가 (`utils/test_defect_type_classifier.py`)
+
+### 픽셀 단위 결함 탐지 (기존 방식)
+1. **MongoDB에서 레이블된 이미지 다운로드** (`util_dataset/download_labeled_layers.py`)
 2. **이미지를 작은 조각으로 나눔** (128×128 타일) (`image_processing.py`)
 3. **각 공장별로 데이터 정리** (8개 클라이언트) (`dataset_functions.py`)
 4. **U-Net 모델 생성** (3클래스 분류) (`unet.py`)
@@ -271,13 +600,23 @@ compare_results_testset(
 ## 🔧 의존성 패키지
 
 ```txt
+# 기본 패키지
 numpy          # 수치 연산
 Pillow         # 이미지 처리
 matplotlib     # 시각화
-tensorflow     # 딥러닝 프레임워크
-pymongo        # MongoDB 클라이언트
-requests       # HTTP 요청 (필요시)
 tqdm           # 진행률 표시
+
+# 딥러닝 프레임워크
+tensorflow     # U-Net 모델 학습 (연합 학습)
+torch          # PyTorch (결함 분류 모델)
+torchvision    # PyTorch 비전 유틸리티
+
+# 데이터베이스
+pymongo        # MongoDB 클라이언트
+
+# 기타
+requests       # HTTP 요청 (필요시)
+scikit-learn   # 머신러닝 유틸리티 (테스트용)
 ```
 
 ---
@@ -304,7 +643,7 @@ tqdm           # 진행률 표시
 - `visualize_results_testset()`: 테스트셋 결과 시각화
 - `compare_results_testset()`: CL vs FL 모델 비교 시각화
 
-### `download_labeled_layers.py`
+### `util_dataset/download_labeled_layers.py`
 - `parse_args()`: 명령줄 인자 파싱
 - `build_client()`: MongoDB 클라이언트 생성
 - `resolve_databases()`: 처리할 DB 목록 결정
@@ -315,3 +654,26 @@ tqdm           # 진행률 표시
 - `write_metadata()`: 메타데이터 JSON 저장
 - `download_for_db()`: DB별 이미지 다운로드
 - `main()`: 메인 실행 함수
+
+### `util_dataset/cleanup_dataset.py`
+- `extract_defect_types_from_metadata()`: JSON 메타데이터에서 결함 유형 추출
+- `is_meaningless_name()`: 의미 없는 이름 확인
+- `cleanup_dataset()`: 데이터셋 정리 및 삭제 메인 함수
+- `main()`: CLI 인터페이스
+
+### `util_dataset/analyze_defect_types.py`
+- `extract_defect_types_from_metadata()`: JSON 메타데이터에서 결함 유형 추출
+- `analyze_defect_dataset()`: 데이터셋의 결함 종류 분석
+
+### `utils/defect_type_classifier.py`
+- `extract_defect_types_from_metadata()`: 메타데이터에서 결함 유형 추출
+- `analyze_defect_types()`: 결함 유형 분석 및 매핑 생성
+- `DefectTypeDataset`: PyTorch 데이터셋 클래스
+- `DefectTypeClassifier`: CNN 분류 모델
+- `train_defect_classifier()`: 모델 학습 함수
+- `main()`: 메인 실행 함수
+
+### `utils/test_defect_type_classifier.py`
+- `test_model()`: 모델 테스트 및 예측
+- `analyze_results()`: 결과 분석 및 통계
+- `visualize_results()`: 혼동 행렬 시각화

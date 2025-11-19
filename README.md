@@ -585,7 +585,7 @@ compare_results_testset(
 - **논문**: Federated learning-based semantic segmentation for pixel-wise defect detection in additive manufacturing
 - **데이터**: Laser Powder Bed Fusion (L-PBF) 이미지
 - **목적**: 3D 프린팅 과정의 결함 자동 탐지
-- **데이터 소스**: MongoDB (keties.iptime.org:50002)
+- **데이터 소스**: MongoDB (연결 정보는 `utils/Dataset/download_labeled_layers.py`에서 설정)
 - **데이터베이스 구조**:
   - 각 실험마다 별도 DB (예: `20210909_2131_D160`)
   - `LayersModelDB`: 레이어 메타데이터 (IsLabeled 필드 포함)

@@ -273,12 +273,12 @@ def analyze_defect_types(data_dir: str, min_count: int = 10) -> Dict[str, int]:
     return mapping
 
 
-def train_defect_classifier(data_dir: str, epochs: int = 50, batch_size: int = 64,
+def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 64,
                            min_defect_count: int = 10, checkpoint_dir: str = "checkpoints",
                            learning_rate: float = 0.001, weight_decay: float = 1e-4,
                            scheduler_type: str = "step", use_data_augmentation: bool = True,
                            label_smoothing: float = 0.0, image_size: int = 128,
-                           early_stopping_threshold: float = 95.0):
+                           early_stopping_threshold: float = 98.0):
     """결함 유형 분류 모델 학습"""
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -601,7 +601,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='결함 유형 분류 모델 학습')
     parser.add_argument('--data-dir', type=str, default='data/labeled_layers',
                        help='데이터 디렉토리')
-    parser.add_argument('--epochs', type=int, default=50,
+    parser.add_argument('--epochs', type=int, default=300,
                        help='학습 에포크 수')
     parser.add_argument('--batch-size', type=int, default=64,
                        help='배치 크기')
@@ -619,8 +619,8 @@ if __name__ == "__main__":
                        help='Label Smoothing 값 (0.0-0.3 권장, 기본값: 0.0)')
     parser.add_argument('--image-size', type=int, default=128,
                        help='이미지 크기 (기본값: 128)')
-    parser.add_argument('--early-stopping-threshold', type=float, default=95.0,
-                       help='조기 종료 기준 정확도 (기본값: 95.0%%)')
+    parser.add_argument('--early-stopping-threshold', type=float, default=98.0,
+                       help='조기 종료 기준 정확도 (기본값: 98.0%%)')
     
     args = parser.parse_args()
     

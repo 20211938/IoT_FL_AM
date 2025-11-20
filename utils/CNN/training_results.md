@@ -200,3 +200,138 @@
 **최고 모델**: `checkpoints/defect_type_classifier_best.pth` (Epoch 247, Val Acc: 93.43%)
 
 ---
+
+## 🏗️ 모델 구조 및 설정
+
+### 모델 아키텍처
+
+**DefectTypeClassifier** - CNN 기반 다중 클래스 분류 모델
+
+#### 특징 추출기 (Feature Extractor)
+
+4개의 Convolutional 블록으로 구성:
+
+1. **첫 번째 블록** (입력: 3채널, 출력: 64채널)
+   - Conv2d(3 → 64, kernel=3×3, padding=1)
+   - BatchNorm2d(64)
+   - ReLU
+   - Conv2d(64 → 64, kernel=3×3, padding=1)
+   - BatchNorm2d(64)
+   - ReLU
+   - MaxPool2d(2×2) → **128×128 → 64×64**
+
+2. **두 번째 블록** (64채널 → 128채널)
+   - Conv2d(64 → 128, kernel=3×3, padding=1)
+   - BatchNorm2d(128)
+   - ReLU
+   - Conv2d(128 → 128, kernel=3×3, padding=1)
+   - BatchNorm2d(128)
+   - ReLU
+   - MaxPool2d(2×2) → **64×64 → 32×32**
+
+3. **세 번째 블록** (128채널 → 256채널)
+   - Conv2d(128 → 256, kernel=3×3, padding=1)
+   - BatchNorm2d(256)
+   - ReLU
+   - Conv2d(256 → 256, kernel=3×3, padding=1)
+   - BatchNorm2d(256)
+   - ReLU
+   - MaxPool2d(2×2) → **32×32 → 16×16**
+
+4. **네 번째 블록** (256채널 → 512채널)
+   - Conv2d(256 → 512, kernel=3×3, padding=1)
+   - BatchNorm2d(512)
+   - ReLU
+   - Conv2d(512 → 512, kernel=3×3, padding=1)
+   - BatchNorm2d(512)
+   - ReLU
+   - MaxPool2d(2×2) → **16×16 → 8×8**
+
+#### 분류기 (Classifier)
+
+- AdaptiveAvgPool2d(4×4) → 512×4×4 = 8,192차원
+- Flatten
+- Linear(8,192 → 1,024) + ReLU + Dropout(0.5)
+- Linear(1,024 → 512) + ReLU + Dropout(0.5)
+- Linear(512 → num_classes) → **출력: 7개 클래스**
+
+### 모델 파라미터
+
+- **입력 크기**: 128×128×3 (RGB 이미지)
+- **출력 크기**: 7개 클래스 (다중 클래스 분류)
+- **총 파라미터 수**: 약 8.2M (추정)
+- **활성화 함수**: ReLU (inplace=True)
+- **정규화**: BatchNorm2d (각 Conv 레이어 후)
+- **정규화**: Dropout(0.5) (Fully Connected 레이어)
+
+### 데이터 전처리
+
+#### 학습 데이터 증강 (Training Augmentation)
+- Resize: 128×128
+- RandomHorizontalFlip: p=0.5
+- RandomVerticalFlip: p=0.5
+- RandomRotation: degrees=15
+- ColorJitter: brightness=0.2, contrast=0.2
+- ToTensor
+- Normalize: mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)
+
+#### 검증 데이터 전처리 (Validation)
+- Resize: 128×128
+- ToTensor
+- Normalize: mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)
+- **증강 없음** (원본 이미지 유지)
+
+### 학습 설정
+
+#### 손실 함수
+- **CrossEntropyLoss** (Label Smoothing: 0.0, 비활성화)
+
+#### 옵티마이저
+- **Adam**
+  - Learning Rate: 0.001
+  - Weight Decay: 0.0001 (L2 정규화)
+
+#### 학습률 스케줄러
+- **StepLR**
+  - step_size: 10
+  - gamma: 0.5 (매 10 에포크마다 학습률 절반으로 감소)
+  - 초기 학습률: 0.001 → Epoch 10: 0.0005 → Epoch 20: 0.00025 → ...
+
+#### 데이터 로더 설정
+- **배치 크기**: 64
+- **num_workers**: 8 (병렬 데이터 로딩)
+- **pin_memory**: True (GPU 전송 최적화)
+- **persistent_workers**: True (워커 재사용)
+- **prefetch_factor**: 8 (미리 로딩할 배치 수)
+- **shuffle**: True (학습), False (검증)
+
+### 최적화 기법
+
+1. **Mixed Precision Training (AMP)**
+   - FP16 연산으로 메모리 사용량 감소 및 속도 향상
+   - GradScaler로 gradient 스케일링
+
+2. **CUDA Stream**
+   - 비동기 데이터 전송으로 GPU 대기 시간 최소화
+   - non_blocking=True로 CPU-GPU 병렬 처리
+
+3. **데이터 로딩 최적화**
+   - 다중 워커(num_workers=8)로 병렬 로딩
+   - prefetch_factor=8로 미리 배치 준비
+   - persistent_workers로 워커 재사용
+
+### 모델 특징
+
+- **VGG 스타일 아키텍처**: 작은 커널(3×3)을 여러 번 쌓는 방식
+- **Batch Normalization**: 각 Conv 레이어 후 적용으로 학습 안정화
+- **Dropout**: Fully Connected 레이어에 0.5 비율로 과적합 방지
+- **Adaptive Pooling**: 다양한 입력 크기에 대응 가능한 구조
+- **깊이**: 4개 블록 + 3개 Fully Connected 레이어
+
+### 모델 복잡도
+
+- **총 레이어 수**: 약 20개 (Conv + FC)
+- **총 파라미터**: 약 8.2M
+- **메모리 사용량**: 배치 크기 64 기준 약 2-3GB (AMP 사용 시)
+
+---

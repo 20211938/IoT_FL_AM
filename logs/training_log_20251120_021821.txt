@@ -1,0 +1,1336 @@
+[로그 저장] 로그 파일: logs\training_log_20251120_021821.txt
+================================================================================
+학습 시작 시간: 2025-11-20 02:18:21
+================================================================================
+
+[Device] cuda
+
+[결함 유형 분석]
+  - 데이터 디렉토리: data/labeled_layers
+  - 최소 샘플 수: 10
+  - 디렉토리 수: 47개
+
+[발견된 결함 유형] (최소 10개 이상)
+  - Super Elevation: 4819개
+  - Recoater Streaking: 3746개
+  - Fail: 1141개
+  - Laser capture timing error: 1089개
+  - Reocater Streaking: 615개
+  - Recoater capture timing error: 309개
+
+[클래스 매핑] 총 7개 클래스
+  - 클래스 0: Normal
+  - 클래스 1: Super Elevation
+  - 클래스 2: Recoater Streaking
+  - 클래스 3: Fail
+  - 클래스 4: Laser capture timing error
+  - 클래스 5: Reocater Streaking
+  - 클래스 6: Recoater capture timing error
+
+[데이터 로딩] 디렉토리 검색 중: data/labeled_layers
+[데이터 로딩] 발견된 데이터베이스 디렉토리: 47개
+  - 20210909_2131_D160: 30개 이미지 발견
+  - 20210913_2011_D160: 6개 이미지 발견
+  - 20210914_1755_D160: 5개 이미지 발견
+  - 20210914_1910_D120: 43개 이미지 발견
+  - 20210923_1350_D160: 6개 이미지 발견
+  - 20210924_2038_D160: 6개 이미지 발견
+  - 20211228_1943_D160: 7개 이미지 발견
+  - 20211230_1601_D160: 721개 이미지 발견
+[데이터 로딩] 처리 중: 10/47 디렉토리...
+  - 20220106_1756_D160: 30개 이미지 발견
+  - 20220110_2030_D120: 55개 이미지 발견
+  - 20220111_2155_D120: 255개 이미지 발견
+  - 20220112_1121_D120: 784개 이미지 발견
+  - 20220119_1146_D120: 235개 이미지 발견
+  - 20220327_2148_D160: 2개 이미지 발견
+  - 20220412_2029_D160: 154개 이미지 발견
+  - 20220413_1143_D160: 857개 이미지 발견
+  - 20220422_1649_D160: 14개 이미지 발견
+  - 20220428_2028_D160: 25개 이미지 발견
+[데이터 로딩] 처리 중: 20/47 디렉토리...
+  - 20220503_1734_M160: 985개 이미지 발견
+  - 20220504_1932_M160: 624개 이미지 발견
+  - 20220511_1843_M160: 91개 이미지 발견
+  - 20220516_1714_M160: 61개 이미지 발견
+  - 20220519_1821_M160: 4개 이미지 발견
+  - 20220523_2052_M160: 184개 이미지 발견
+  - 20220524_1614_M160: 53개 이미지 발견
+  - 20220524_2012_M160: 60개 이미지 발견
+  - 20220525_1723_M160: 8개 이미지 발견
+  - 20220530_1616_M160: 1232개 이미지 발견
+[데이터 로딩] 처리 중: 30/47 디렉토리...
+  - 20220531_2227_M160: 37개 이미지 발견
+  - 20220601_1356_M160: 7개 이미지 발견
+  - 20220601_1719_M160: 9개 이미지 발견
+  - 20220605_1508_M160: 44개 이미지 발견
+  - 20220605_1810_M160: 13개 이미지 발견
+  - 20220606_0211_M160: 595개 이미지 발견
+  - 20220616_2103_M160: 70개 이미지 발견
+  - 20220622_1617_M160: 395개 이미지 발견
+  - 20220623_2229_M160: 31개 이미지 발견
+  - 20220628_1112_M160: 268개 이미지 발견
+[데이터 로딩] 처리 중: 40/47 디렉토리...
+  - 20220629_1632_M160: 64개 이미지 발견
+  - 20220629_2104_M160: 183개 이미지 발견
+  - 20220630_1035_M160: 30개 이미지 발견
+  - 20220704_1812_M160: 425개 이미지 발견
+  - 20220712_1916_M160: 340개 이미지 발견
+  - 20220713_2322_M160: 11개 이미지 발견
+  - 20220714_2256_M160: 391개 이미지 발견
+  - 20220716_1706_M160: 215개 이미지 발견
+[데이터 로딩] 완료! 총 9665개 이미지 로드됨
+
+[데이터 분할]
+  - 학습: 7732개
+  - 검증: 1933개
+[최적화] StepLR 스케줄러 사용 (step_size=10, gamma=0.5)
+[하이퍼파라미터]
+  - 학습률: 0.001
+  - Weight Decay: 0.0001
+  - 이미지 크기: 128x128
+  - 데이터 증강: 활성화
+[최적화] Mixed Precision Training (AMP) 활성화
+[최적화] CUDA 스트림 활성화, num_workers=8, prefetch_factor=8
+
+[학습 시작]
+  - 에포크: 300
+  - 배치 크기: 64
+  - 조기 종료 기준: 검증 정확도 98.0% 도달
+
+[Epoch 1/300]
+  Train Loss: 1.4128, Train Acc: 43.11%
+  Val Loss: 1.2577, Val Acc: 45.47%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 45.47%)
+
+[Epoch 2/300]
+  Train Loss: 1.1056, Train Acc: 47.94%
+  Val Loss: 1.0452, Val Acc: 45.11%
+
+[Epoch 3/300]
+  Train Loss: 1.0693, Train Acc: 48.45%
+  Val Loss: 1.8864, Val Acc: 11.85%
+
+[Epoch 4/300]
+  Train Loss: 0.9865, Train Acc: 52.68%
+  Val Loss: 1.2450, Val Acc: 47.34%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 47.34%)
+
+[Epoch 5/300]
+  Train Loss: 0.9380, Train Acc: 56.05%
+  Val Loss: 1.3203, Val Acc: 48.78%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 48.78%)
+
+[Epoch 6/300]
+  Train Loss: 0.9014, Train Acc: 58.73%
+  Val Loss: 0.7857, Val Acc: 68.13%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 68.13%)
+
+[Epoch 7/300]
+  Train Loss: 0.8903, Train Acc: 60.14%
+  Val Loss: 1.3170, Val Acc: 46.87%
+
+[Epoch 8/300]
+  Train Loss: 0.8006, Train Acc: 67.96%
+  Val Loss: 1.4461, Val Acc: 50.96%
+
+[Epoch 9/300]
+  Train Loss: 0.7279, Train Acc: 73.20%
+  Val Loss: 0.6478, Val Acc: 83.14%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 83.14%)
+
+[Epoch 10/300]
+  Train Loss: 0.6396, Train Acc: 77.90%
+  Val Loss: 0.5289, Val Acc: 81.95%
+
+[Epoch 11/300]
+  Train Loss: 0.5496, Train Acc: 81.47%
+  Val Loss: 0.5540, Val Acc: 82.62%
+
+[Epoch 12/300]
+  Train Loss: 0.5247, Train Acc: 82.54%
+  Val Loss: 0.6113, Val Acc: 78.94%
+
+[Epoch 13/300]
+  Train Loss: 0.4946, Train Acc: 83.39%
+  Val Loss: 0.4325, Val Acc: 84.95%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 84.95%)
+
+[Epoch 14/300]
+  Train Loss: 0.4892, Train Acc: 83.28%
+  Val Loss: 0.4149, Val Acc: 86.45%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 86.45%)
+
+[Epoch 15/300]
+  Train Loss: 0.4716, Train Acc: 83.60%
+  Val Loss: 0.3942, Val Acc: 86.45%
+
+[Epoch 16/300]
+  Train Loss: 0.4601, Train Acc: 83.98%
+  Val Loss: 0.4538, Val Acc: 84.43%
+
+[Epoch 17/300]
+  Train Loss: 0.4504, Train Acc: 84.49%
+  Val Loss: 0.4168, Val Acc: 84.64%
+
+[Epoch 18/300]
+  Train Loss: 0.4412, Train Acc: 84.76%
+  Val Loss: 0.4148, Val Acc: 86.34%
+
+[Epoch 19/300]
+  Train Loss: 0.4424, Train Acc: 84.54%
+  Val Loss: 0.3864, Val Acc: 86.39%
+
+[Epoch 20/300]
+  Train Loss: 0.4343, Train Acc: 85.08%
+  Val Loss: 0.3853, Val Acc: 86.45%
+
+[Epoch 21/300]
+  Train Loss: 0.4015, Train Acc: 85.54%
+  Val Loss: 0.3542, Val Acc: 87.38%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 87.38%)
+
+[Epoch 22/300]
+  Train Loss: 0.3758, Train Acc: 86.38%
+  Val Loss: 0.3665, Val Acc: 87.48%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 87.48%)
+
+[Epoch 23/300]
+  Train Loss: 0.3687, Train Acc: 86.28%
+  Val Loss: 0.4263, Val Acc: 86.70%
+
+[Epoch 24/300]
+  Train Loss: 0.3694, Train Acc: 86.61%
+  Val Loss: 0.3318, Val Acc: 89.14%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 89.14%)
+
+[Epoch 25/300]
+  Train Loss: 0.3606, Train Acc: 86.89%
+  Val Loss: 0.3373, Val Acc: 88.77%
+
+[Epoch 26/300]
+  Train Loss: 0.3584, Train Acc: 87.18%
+  Val Loss: 0.3448, Val Acc: 88.72%
+
+[Epoch 27/300]
+  Train Loss: 0.3559, Train Acc: 87.02%
+  Val Loss: 0.3285, Val Acc: 89.50%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 89.50%)
+
+[Epoch 28/300]
+  Train Loss: 0.3471, Train Acc: 87.64%
+  Val Loss: 0.3179, Val Acc: 89.50%
+
+[Epoch 29/300]
+  Train Loss: 0.3439, Train Acc: 87.67%
+  Val Loss: 0.3543, Val Acc: 88.57%
+
+[Epoch 30/300]
+  Train Loss: 0.3417, Train Acc: 88.00%
+  Val Loss: 0.3138, Val Acc: 90.64%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 90.64%)
+
+[Epoch 31/300]
+  Train Loss: 0.3169, Train Acc: 88.80%
+  Val Loss: 0.2984, Val Acc: 90.33%
+
+[Epoch 32/300]
+  Train Loss: 0.3111, Train Acc: 88.89%
+  Val Loss: 0.3236, Val Acc: 90.38%
+
+[Epoch 33/300]
+  Train Loss: 0.3172, Train Acc: 88.86%
+  Val Loss: 0.3078, Val Acc: 90.74%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 90.74%)
+
+[Epoch 34/300]
+  Train Loss: 0.3043, Train Acc: 89.14%
+  Val Loss: 0.3015, Val Acc: 89.19%
+
+[Epoch 35/300]
+  Train Loss: 0.3044, Train Acc: 89.20%
+  Val Loss: 0.2847, Val Acc: 89.81%
+
+[Epoch 36/300]
+  Train Loss: 0.2980, Train Acc: 89.41%
+  Val Loss: 0.3025, Val Acc: 89.71%
+
+[Epoch 37/300]
+  Train Loss: 0.2910, Train Acc: 89.59%
+  Val Loss: 0.2834, Val Acc: 91.36%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 91.36%)
+
+[Epoch 38/300]
+  Train Loss: 0.2925, Train Acc: 89.49%
+  Val Loss: 0.2934, Val Acc: 89.71%
+
+[Epoch 39/300]
+  Train Loss: 0.2880, Train Acc: 89.83%
+  Val Loss: 0.3165, Val Acc: 89.50%
+
+[Epoch 40/300]
+  Train Loss: 0.2889, Train Acc: 89.98%
+  Val Loss: 0.2837, Val Acc: 91.67%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 91.67%)
+
+[Epoch 41/300]
+  Train Loss: 0.2791, Train Acc: 90.13%
+  Val Loss: 0.2761, Val Acc: 91.46%
+
+[Epoch 42/300]
+  Train Loss: 0.2800, Train Acc: 89.92%
+  Val Loss: 0.2801, Val Acc: 91.62%
+
+[Epoch 43/300]
+  Train Loss: 0.2675, Train Acc: 90.60%
+  Val Loss: 0.2745, Val Acc: 89.91%
+
+[Epoch 44/300]
+  Train Loss: 0.2715, Train Acc: 90.18%
+  Val Loss: 0.2862, Val Acc: 91.52%
+
+[Epoch 45/300]
+  Train Loss: 0.2736, Train Acc: 90.40%
+  Val Loss: 0.2713, Val Acc: 91.62%
+
+[Epoch 46/300]
+  Train Loss: 0.2658, Train Acc: 89.91%
+  Val Loss: 0.2680, Val Acc: 91.93%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 91.93%)
+
+[Epoch 47/300]
+  Train Loss: 0.2671, Train Acc: 90.39%
+  Val Loss: 0.2796, Val Acc: 91.10%
+
+[Epoch 48/300]
+  Train Loss: 0.2647, Train Acc: 90.35%
+  Val Loss: 0.2869, Val Acc: 90.95%
+
+[Epoch 49/300]
+  Train Loss: 0.2624, Train Acc: 90.42%
+  Val Loss: 0.2751, Val Acc: 92.08%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.08%)
+
+[Epoch 50/300]
+  Train Loss: 0.2624, Train Acc: 90.55%
+  Val Loss: 0.2659, Val Acc: 91.83%
+
+[Epoch 51/300]
+  Train Loss: 0.2529, Train Acc: 90.73%
+  Val Loss: 0.2734, Val Acc: 92.14%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.14%)
+
+[Epoch 52/300]
+  Train Loss: 0.2494, Train Acc: 90.77%
+  Val Loss: 0.2702, Val Acc: 90.84%
+
+[Epoch 53/300]
+  Train Loss: 0.2498, Train Acc: 91.05%
+  Val Loss: 0.2644, Val Acc: 91.62%
+
+[Epoch 54/300]
+  Train Loss: 0.2489, Train Acc: 90.71%
+  Val Loss: 0.2605, Val Acc: 92.40%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.40%)
+
+[Epoch 55/300]
+  Train Loss: 0.2539, Train Acc: 90.83%
+  Val Loss: 0.2651, Val Acc: 91.93%
+
+[Epoch 56/300]
+  Train Loss: 0.2524, Train Acc: 90.48%
+  Val Loss: 0.2541, Val Acc: 92.55%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.55%)
+
+[Epoch 57/300]
+  Train Loss: 0.2515, Train Acc: 90.75%
+  Val Loss: 0.2637, Val Acc: 92.55%
+
+[Epoch 58/300]
+  Train Loss: 0.2435, Train Acc: 91.13%
+  Val Loss: 0.2626, Val Acc: 91.77%
+
+[Epoch 59/300]
+  Train Loss: 0.2454, Train Acc: 91.10%
+  Val Loss: 0.2561, Val Acc: 92.08%
+
+[Epoch 60/300]
+  Train Loss: 0.2453, Train Acc: 91.02%
+  Val Loss: 0.2560, Val Acc: 92.86%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.86%)
+
+[Epoch 61/300]
+  Train Loss: 0.2435, Train Acc: 91.09%
+  Val Loss: 0.2547, Val Acc: 92.86%
+
+[Epoch 62/300]
+  Train Loss: 0.2387, Train Acc: 90.97%
+  Val Loss: 0.2538, Val Acc: 92.81%
+
+[Epoch 63/300]
+  Train Loss: 0.2354, Train Acc: 91.40%
+  Val Loss: 0.2497, Val Acc: 92.50%
+
+[Epoch 64/300]
+  Train Loss: 0.2390, Train Acc: 91.28%
+  Val Loss: 0.2538, Val Acc: 92.65%
+
+[Epoch 65/300]
+  Train Loss: 0.2342, Train Acc: 91.22%
+  Val Loss: 0.2510, Val Acc: 92.91%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.91%)
+
+[Epoch 66/300]
+  Train Loss: 0.2405, Train Acc: 91.53%
+  Val Loss: 0.2503, Val Acc: 92.81%
+
+[Epoch 67/300]
+  Train Loss: 0.2351, Train Acc: 91.37%
+  Val Loss: 0.2516, Val Acc: 92.91%
+
+[Epoch 68/300]
+  Train Loss: 0.2371, Train Acc: 91.32%
+  Val Loss: 0.2539, Val Acc: 92.91%
+
+[Epoch 69/300]
+  Train Loss: 0.2336, Train Acc: 91.50%
+  Val Loss: 0.2527, Val Acc: 92.60%
+
+[Epoch 70/300]
+  Train Loss: 0.2349, Train Acc: 91.32%
+  Val Loss: 0.2443, Val Acc: 92.65%
+
+[Epoch 71/300]
+  Train Loss: 0.2344, Train Acc: 91.15%
+  Val Loss: 0.2481, Val Acc: 92.71%
+
+[Epoch 72/300]
+  Train Loss: 0.2336, Train Acc: 91.49%
+  Val Loss: 0.2523, Val Acc: 92.65%
+
+[Epoch 73/300]
+  Train Loss: 0.2286, Train Acc: 91.70%
+  Val Loss: 0.2475, Val Acc: 92.96%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.96%)
+
+[Epoch 74/300]
+  Train Loss: 0.2297, Train Acc: 91.48%
+  Val Loss: 0.2488, Val Acc: 92.86%
+
+[Epoch 75/300]
+  Train Loss: 0.2350, Train Acc: 91.58%
+  Val Loss: 0.2503, Val Acc: 92.50%
+
+[Epoch 76/300]
+  Train Loss: 0.2334, Train Acc: 91.49%
+  Val Loss: 0.2507, Val Acc: 92.76%
+
+[Epoch 77/300]
+  Train Loss: 0.2261, Train Acc: 91.57%
+  Val Loss: 0.2459, Val Acc: 93.27%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 93.27%)
+
+[Epoch 78/300]
+  Train Loss: 0.2326, Train Acc: 91.35%
+  Val Loss: 0.2461, Val Acc: 93.22%
+
+[Epoch 79/300]
+  Train Loss: 0.2301, Train Acc: 91.49%
+  Val Loss: 0.2478, Val Acc: 92.86%
+
+[Epoch 80/300]
+  Train Loss: 0.2318, Train Acc: 91.41%
+  Val Loss: 0.2493, Val Acc: 92.81%
+
+[Epoch 81/300]
+  Train Loss: 0.2330, Train Acc: 91.58%
+  Val Loss: 0.2494, Val Acc: 92.96%
+
+[Epoch 82/300]
+  Train Loss: 0.2328, Train Acc: 91.45%
+  Val Loss: 0.2507, Val Acc: 92.60%
+
+[Epoch 83/300]
+  Train Loss: 0.2298, Train Acc: 91.31%
+  Val Loss: 0.2503, Val Acc: 92.65%
+
+[Epoch 84/300]
+  Train Loss: 0.2257, Train Acc: 91.54%
+  Val Loss: 0.2487, Val Acc: 92.86%
+
+[Epoch 85/300]
+  Train Loss: 0.2266, Train Acc: 91.45%
+  Val Loss: 0.2483, Val Acc: 93.07%
+
+[Epoch 86/300]
+  Train Loss: 0.2308, Train Acc: 91.61%
+  Val Loss: 0.2497, Val Acc: 93.12%
+
+[Epoch 87/300]
+  Train Loss: 0.2260, Train Acc: 91.79%
+  Val Loss: 0.2442, Val Acc: 93.12%
+
+[Epoch 88/300]
+  Train Loss: 0.2282, Train Acc: 91.57%
+  Val Loss: 0.2427, Val Acc: 93.12%
+
+[Epoch 89/300]
+  Train Loss: 0.2311, Train Acc: 91.67%
+  Val Loss: 0.2484, Val Acc: 92.81%
+
+[Epoch 90/300]
+  Train Loss: 0.2257, Train Acc: 91.63%
+  Val Loss: 0.2454, Val Acc: 92.96%
+
+[Epoch 91/300]
+  Train Loss: 0.2242, Train Acc: 91.71%
+  Val Loss: 0.2462, Val Acc: 93.02%
+
+[Epoch 92/300]
+  Train Loss: 0.2316, Train Acc: 91.55%
+  Val Loss: 0.2460, Val Acc: 93.17%
+
+[Epoch 93/300]
+  Train Loss: 0.2281, Train Acc: 91.54%
+  Val Loss: 0.2464, Val Acc: 93.07%
+
+[Epoch 94/300]
+  Train Loss: 0.2294, Train Acc: 91.52%
+  Val Loss: 0.2469, Val Acc: 93.07%
+
+[Epoch 95/300]
+  Train Loss: 0.2254, Train Acc: 91.84%
+  Val Loss: 0.2461, Val Acc: 93.02%
+
+[Epoch 96/300]
+  Train Loss: 0.2298, Train Acc: 91.24%
+  Val Loss: 0.2462, Val Acc: 93.22%
+
+[Epoch 97/300]
+  Train Loss: 0.2325, Train Acc: 91.74%
+  Val Loss: 0.2449, Val Acc: 93.12%
+
+[Epoch 98/300]
+  Train Loss: 0.2288, Train Acc: 91.70%
+  Val Loss: 0.2459, Val Acc: 93.12%
+
+[Epoch 99/300]
+  Train Loss: 0.2242, Train Acc: 91.39%
+  Val Loss: 0.2465, Val Acc: 93.02%
+
+[Epoch 100/300]
+  Train Loss: 0.2298, Train Acc: 91.85%
+  Val Loss: 0.2485, Val Acc: 92.91%
+
+[Epoch 101/300]
+  Train Loss: 0.2259, Train Acc: 91.86%
+  Val Loss: 0.2476, Val Acc: 92.86%
+
+[Epoch 102/300]
+  Train Loss: 0.2244, Train Acc: 91.79%
+  Val Loss: 0.2465, Val Acc: 93.17%
+
+[Epoch 103/300]
+  Train Loss: 0.2264, Train Acc: 91.80%
+  Val Loss: 0.2479, Val Acc: 93.02%
+
+[Epoch 104/300]
+  Train Loss: 0.2284, Train Acc: 91.67%
+  Val Loss: 0.2476, Val Acc: 92.91%
+
+[Epoch 105/300]
+  Train Loss: 0.2296, Train Acc: 91.65%
+  Val Loss: 0.2467, Val Acc: 93.27%
+
+[Epoch 106/300]
+  Train Loss: 0.2310, Train Acc: 91.35%
+  Val Loss: 0.2461, Val Acc: 93.33%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 93.33%)
+
+[Epoch 107/300]
+  Train Loss: 0.2292, Train Acc: 91.71%
+  Val Loss: 0.2450, Val Acc: 93.22%
+
+[Epoch 108/300]
+  Train Loss: 0.2276, Train Acc: 91.50%
+  Val Loss: 0.2463, Val Acc: 93.07%
+
+[Epoch 109/300]
+  Train Loss: 0.2232, Train Acc: 91.84%
+  Val Loss: 0.2466, Val Acc: 93.27%
+
+[Epoch 110/300]
+  Train Loss: 0.2299, Train Acc: 91.53%
+  Val Loss: 0.2470, Val Acc: 93.07%
+
+[Epoch 111/300]
+  Train Loss: 0.2281, Train Acc: 91.77%
+  Val Loss: 0.2455, Val Acc: 93.33%
+
+[Epoch 112/300]
+  Train Loss: 0.2237, Train Acc: 91.88%
+  Val Loss: 0.2473, Val Acc: 93.07%
+
+[Epoch 113/300]
+  Train Loss: 0.2321, Train Acc: 91.75%
+  Val Loss: 0.2470, Val Acc: 92.91%
+
+[Epoch 114/300]
+  Train Loss: 0.2227, Train Acc: 92.07%
+  Val Loss: 0.2458, Val Acc: 93.22%
+
+[Epoch 115/300]
+  Train Loss: 0.2216, Train Acc: 91.94%
+  Val Loss: 0.2462, Val Acc: 93.22%
+
+[Epoch 116/300]
+  Train Loss: 0.2259, Train Acc: 91.61%
+  Val Loss: 0.2456, Val Acc: 93.27%
+
+[Epoch 117/300]
+  Train Loss: 0.2273, Train Acc: 91.61%
+  Val Loss: 0.2459, Val Acc: 93.27%
+
+[Epoch 118/300]
+  Train Loss: 0.2265, Train Acc: 91.67%
+  Val Loss: 0.2464, Val Acc: 93.12%
+
+[Epoch 119/300]
+  Train Loss: 0.2226, Train Acc: 91.88%
+  Val Loss: 0.2445, Val Acc: 93.33%
+
+[Epoch 120/300]
+  Train Loss: 0.2324, Train Acc: 91.43%
+  Val Loss: 0.2462, Val Acc: 93.27%
+
+[Epoch 121/300]
+  Train Loss: 0.2202, Train Acc: 91.63%
+  Val Loss: 0.2472, Val Acc: 93.07%
+
+[Epoch 122/300]
+  Train Loss: 0.2259, Train Acc: 91.92%
+  Val Loss: 0.2482, Val Acc: 92.91%
+
+[Epoch 123/300]
+  Train Loss: 0.2299, Train Acc: 91.49%
+  Val Loss: 0.2453, Val Acc: 93.27%
+
+[Epoch 124/300]
+  Train Loss: 0.2270, Train Acc: 91.65%
+  Val Loss: 0.2465, Val Acc: 93.12%
+
+[Epoch 125/300]
+  Train Loss: 0.2251, Train Acc: 91.85%
+  Val Loss: 0.2462, Val Acc: 93.17%
+
+[Epoch 126/300]
+  Train Loss: 0.2260, Train Acc: 91.68%
+  Val Loss: 0.2448, Val Acc: 93.38%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 93.38%)
+
+[Epoch 127/300]
+  Train Loss: 0.2239, Train Acc: 91.63%
+  Val Loss: 0.2454, Val Acc: 93.17%
+
+[Epoch 128/300]
+  Train Loss: 0.2264, Train Acc: 91.54%
+  Val Loss: 0.2468, Val Acc: 92.96%
+
+[Epoch 129/300]
+  Train Loss: 0.2290, Train Acc: 91.53%
+  Val Loss: 0.2459, Val Acc: 93.22%
+
+[Epoch 130/300]
+  Train Loss: 0.2240, Train Acc: 91.67%
+  Val Loss: 0.2464, Val Acc: 93.02%
+
+[Epoch 131/300]
+  Train Loss: 0.2221, Train Acc: 91.92%
+  Val Loss: 0.2444, Val Acc: 93.38%
+
+[Epoch 132/300]
+  Train Loss: 0.2280, Train Acc: 91.52%
+  Val Loss: 0.2469, Val Acc: 93.02%
+
+[Epoch 133/300]
+  Train Loss: 0.2204, Train Acc: 92.32%
+  Val Loss: 0.2455, Val Acc: 93.27%
+
+[Epoch 134/300]
+  Train Loss: 0.2224, Train Acc: 91.54%
+  Val Loss: 0.2456, Val Acc: 93.33%
+
+[Epoch 135/300]
+  Train Loss: 0.2283, Train Acc: 91.61%
+  Val Loss: 0.2456, Val Acc: 93.27%
+
+[Epoch 136/300]
+  Train Loss: 0.2274, Train Acc: 91.71%
+  Val Loss: 0.2454, Val Acc: 93.22%
+
+[Epoch 137/300]
+  Train Loss: 0.2269, Train Acc: 91.81%
+  Val Loss: 0.2456, Val Acc: 93.22%
+
+[Epoch 138/300]
+  Train Loss: 0.2254, Train Acc: 91.77%
+  Val Loss: 0.2460, Val Acc: 93.27%
+
+[Epoch 139/300]
+  Train Loss: 0.2273, Train Acc: 91.76%
+  Val Loss: 0.2456, Val Acc: 93.22%
+
+[Epoch 140/300]
+  Train Loss: 0.2280, Train Acc: 91.43%
+  Val Loss: 0.2468, Val Acc: 93.17%
+
+[Epoch 141/300]
+  Train Loss: 0.2242, Train Acc: 91.66%
+  Val Loss: 0.2463, Val Acc: 92.96%
+
+[Epoch 142/300]
+  Train Loss: 0.2282, Train Acc: 91.59%
+  Val Loss: 0.2451, Val Acc: 93.27%
+
+[Epoch 143/300]
+  Train Loss: 0.2244, Train Acc: 91.81%
+  Val Loss: 0.2459, Val Acc: 93.07%
+
+[Epoch 144/300]
+  Train Loss: 0.2302, Train Acc: 91.76%
+  Val Loss: 0.2462, Val Acc: 93.07%
+
+[Epoch 145/300]
+  Train Loss: 0.2261, Train Acc: 91.72%
+  Val Loss: 0.2451, Val Acc: 93.17%
+
+[Epoch 146/300]
+  Train Loss: 0.2251, Train Acc: 91.63%
+  Val Loss: 0.2464, Val Acc: 93.12%
+
+[Epoch 147/300]
+  Train Loss: 0.2270, Train Acc: 91.66%
+  Val Loss: 0.2449, Val Acc: 93.22%
+
+[Epoch 148/300]
+  Train Loss: 0.2255, Train Acc: 91.65%
+  Val Loss: 0.2461, Val Acc: 93.27%
+
+[Epoch 149/300]
+  Train Loss: 0.2285, Train Acc: 91.61%
+  Val Loss: 0.2464, Val Acc: 93.22%
+
+[Epoch 150/300]
+  Train Loss: 0.2297, Train Acc: 91.33%
+  Val Loss: 0.2461, Val Acc: 93.12%
+
+[Epoch 151/300]
+  Train Loss: 0.2302, Train Acc: 91.88%
+  Val Loss: 0.2464, Val Acc: 92.96%
+
+[Epoch 152/300]
+  Train Loss: 0.2246, Train Acc: 91.88%
+  Val Loss: 0.2464, Val Acc: 93.17%
+
+[Epoch 153/300]
+  Train Loss: 0.2259, Train Acc: 91.81%
+  Val Loss: 0.2455, Val Acc: 93.22%
+
+[Epoch 154/300]
+  Train Loss: 0.2248, Train Acc: 91.59%
+  Val Loss: 0.2457, Val Acc: 93.17%
+
+[Epoch 155/300]
+  Train Loss: 0.2266, Train Acc: 91.77%
+  Val Loss: 0.2448, Val Acc: 93.22%
+
+[Epoch 156/300]
+  Train Loss: 0.2229, Train Acc: 91.68%
+  Val Loss: 0.2452, Val Acc: 93.12%
+
+[Epoch 157/300]
+  Train Loss: 0.2237, Train Acc: 91.70%
+  Val Loss: 0.2458, Val Acc: 93.27%
+
+[Epoch 158/300]
+  Train Loss: 0.2306, Train Acc: 91.74%
+  Val Loss: 0.2458, Val Acc: 93.22%
+
+[Epoch 159/300]
+  Train Loss: 0.2241, Train Acc: 92.01%
+  Val Loss: 0.2462, Val Acc: 93.17%
+
+[Epoch 160/300]
+  Train Loss: 0.2251, Train Acc: 91.62%
+  Val Loss: 0.2453, Val Acc: 93.07%
+
+[Epoch 161/300]
+  Train Loss: 0.2253, Train Acc: 91.50%
+  Val Loss: 0.2448, Val Acc: 93.22%
+
+[Epoch 162/300]
+  Train Loss: 0.2300, Train Acc: 91.75%
+  Val Loss: 0.2452, Val Acc: 93.33%
+
+[Epoch 163/300]
+  Train Loss: 0.2252, Train Acc: 91.75%
+  Val Loss: 0.2446, Val Acc: 93.27%
+
+[Epoch 164/300]
+  Train Loss: 0.2287, Train Acc: 91.50%
+  Val Loss: 0.2445, Val Acc: 93.38%
+
+[Epoch 165/300]
+  Train Loss: 0.2241, Train Acc: 91.81%
+  Val Loss: 0.2472, Val Acc: 93.12%
+
+[Epoch 166/300]
+  Train Loss: 0.2257, Train Acc: 91.89%
+  Val Loss: 0.2464, Val Acc: 93.22%
+
+[Epoch 167/300]
+  Train Loss: 0.2257, Train Acc: 91.81%
+  Val Loss: 0.2457, Val Acc: 93.17%
+
+[Epoch 168/300]
+  Train Loss: 0.2300, Train Acc: 91.37%
+  Val Loss: 0.2445, Val Acc: 93.33%
+
+[Epoch 169/300]
+  Train Loss: 0.2285, Train Acc: 91.83%
+  Val Loss: 0.2474, Val Acc: 92.81%
+
+[Epoch 170/300]
+  Train Loss: 0.2282, Train Acc: 91.68%
+  Val Loss: 0.2477, Val Acc: 93.12%
+
+[Epoch 171/300]
+  Train Loss: 0.2294, Train Acc: 91.65%
+  Val Loss: 0.2450, Val Acc: 93.38%
+
+[Epoch 172/300]
+  Train Loss: 0.2286, Train Acc: 91.50%
+  Val Loss: 0.2473, Val Acc: 93.07%
+
+[Epoch 173/300]
+  Train Loss: 0.2250, Train Acc: 91.77%
+  Val Loss: 0.2453, Val Acc: 93.22%
+
+[Epoch 174/300]
+  Train Loss: 0.2255, Train Acc: 91.53%
+  Val Loss: 0.2458, Val Acc: 93.27%
+
+[Epoch 175/300]
+  Train Loss: 0.2245, Train Acc: 91.54%
+  Val Loss: 0.2456, Val Acc: 93.17%
+
+[Epoch 176/300]
+  Train Loss: 0.2313, Train Acc: 91.68%
+  Val Loss: 0.2455, Val Acc: 93.17%
+
+[Epoch 177/300]
+  Train Loss: 0.2218, Train Acc: 91.89%
+  Val Loss: 0.2472, Val Acc: 93.12%
+
+[Epoch 178/300]
+  Train Loss: 0.2265, Train Acc: 91.66%
+  Val Loss: 0.2451, Val Acc: 93.27%
+
+[Epoch 179/300]
+  Train Loss: 0.2263, Train Acc: 91.67%
+  Val Loss: 0.2451, Val Acc: 93.17%
+
+[Epoch 180/300]
+  Train Loss: 0.2280, Train Acc: 91.55%
+  Val Loss: 0.2449, Val Acc: 93.33%
+
+[Epoch 181/300]
+  Train Loss: 0.2284, Train Acc: 91.70%
+  Val Loss: 0.2458, Val Acc: 93.27%
+
+[Epoch 182/300]
+  Train Loss: 0.2194, Train Acc: 91.74%
+  Val Loss: 0.2474, Val Acc: 92.96%
+
+[Epoch 183/300]
+  Train Loss: 0.2251, Train Acc: 91.68%
+  Val Loss: 0.2447, Val Acc: 93.33%
+
+[Epoch 184/300]
+  Train Loss: 0.2254, Train Acc: 91.65%
+  Val Loss: 0.2449, Val Acc: 93.27%
+
+[Epoch 185/300]
+  Train Loss: 0.2258, Train Acc: 91.63%
+  Val Loss: 0.2442, Val Acc: 93.33%
+
+[Epoch 186/300]
+  Train Loss: 0.2256, Train Acc: 91.72%
+  Val Loss: 0.2466, Val Acc: 92.71%
+
+[Epoch 187/300]
+  Train Loss: 0.2270, Train Acc: 91.43%
+  Val Loss: 0.2460, Val Acc: 93.17%
+
+[Epoch 188/300]
+  Train Loss: 0.2264, Train Acc: 91.83%
+  Val Loss: 0.2448, Val Acc: 93.27%
+
+[Epoch 189/300]
+  Train Loss: 0.2264, Train Acc: 91.66%
+  Val Loss: 0.2447, Val Acc: 93.27%
+
+[Epoch 190/300]
+  Train Loss: 0.2262, Train Acc: 91.67%
+  Val Loss: 0.2438, Val Acc: 93.27%
+
+[Epoch 191/300]
+  Train Loss: 0.2261, Train Acc: 91.55%
+  Val Loss: 0.2441, Val Acc: 93.22%
+
+[Epoch 192/300]
+  Train Loss: 0.2281, Train Acc: 91.66%
+  Val Loss: 0.2457, Val Acc: 93.17%
+
+[Epoch 193/300]
+  Train Loss: 0.2279, Train Acc: 91.49%
+  Val Loss: 0.2470, Val Acc: 92.91%
+
+[Epoch 194/300]
+  Train Loss: 0.2245, Train Acc: 91.83%
+  Val Loss: 0.2452, Val Acc: 93.22%
+
+[Epoch 195/300]
+  Train Loss: 0.2286, Train Acc: 91.58%
+  Val Loss: 0.2456, Val Acc: 93.27%
+
+[Epoch 196/300]
+  Train Loss: 0.2323, Train Acc: 91.57%
+  Val Loss: 0.2454, Val Acc: 93.27%
+
+[Epoch 197/300]
+  Train Loss: 0.2236, Train Acc: 91.80%
+  Val Loss: 0.2455, Val Acc: 93.17%
+
+[Epoch 198/300]
+  Train Loss: 0.2258, Train Acc: 92.05%
+  Val Loss: 0.2457, Val Acc: 93.22%
+
+[Epoch 199/300]
+  Train Loss: 0.2197, Train Acc: 91.58%
+  Val Loss: 0.2452, Val Acc: 93.27%
+
+[Epoch 200/300]
+  Train Loss: 0.2238, Train Acc: 91.66%
+  Val Loss: 0.2460, Val Acc: 93.17%
+
+[Epoch 201/300]
+  Train Loss: 0.2251, Train Acc: 91.72%
+  Val Loss: 0.2451, Val Acc: 93.33%
+
+[Epoch 202/300]
+  Train Loss: 0.2245, Train Acc: 91.67%
+  Val Loss: 0.2452, Val Acc: 93.22%
+
+[Epoch 203/300]
+  Train Loss: 0.2255, Train Acc: 91.66%
+  Val Loss: 0.2464, Val Acc: 93.07%
+
+[Epoch 204/300]
+  Train Loss: 0.2250, Train Acc: 91.77%
+  Val Loss: 0.2455, Val Acc: 93.27%
+
+[Epoch 205/300]
+  Train Loss: 0.2262, Train Acc: 91.81%
+  Val Loss: 0.2460, Val Acc: 93.22%
+
+[Epoch 206/300]
+  Train Loss: 0.2305, Train Acc: 91.40%
+  Val Loss: 0.2461, Val Acc: 93.02%
+
+[Epoch 207/300]
+  Train Loss: 0.2265, Train Acc: 91.62%
+  Val Loss: 0.2448, Val Acc: 93.38%
+
+[Epoch 208/300]
+  Train Loss: 0.2237, Train Acc: 91.94%
+  Val Loss: 0.2469, Val Acc: 93.12%
+
+[Epoch 209/300]
+  Train Loss: 0.2284, Train Acc: 91.61%
+  Val Loss: 0.2449, Val Acc: 93.27%
+
+[Epoch 210/300]
+  Train Loss: 0.2282, Train Acc: 91.72%
+  Val Loss: 0.2446, Val Acc: 93.38%
+
+[Epoch 211/300]
+  Train Loss: 0.2207, Train Acc: 91.83%
+  Val Loss: 0.2461, Val Acc: 93.17%
+
+[Epoch 212/300]
+  Train Loss: 0.2298, Train Acc: 91.53%
+  Val Loss: 0.2460, Val Acc: 93.02%
+
+[Epoch 213/300]
+  Train Loss: 0.2243, Train Acc: 91.67%
+  Val Loss: 0.2459, Val Acc: 93.33%
+
+[Epoch 214/300]
+  Train Loss: 0.2254, Train Acc: 91.68%
+  Val Loss: 0.2459, Val Acc: 93.12%
+
+[Epoch 215/300]
+  Train Loss: 0.2236, Train Acc: 91.68%
+  Val Loss: 0.2447, Val Acc: 93.07%
+
+[Epoch 216/300]
+  Train Loss: 0.2294, Train Acc: 91.63%
+  Val Loss: 0.2462, Val Acc: 93.12%
+
+[Epoch 217/300]
+  Train Loss: 0.2262, Train Acc: 91.80%
+  Val Loss: 0.2460, Val Acc: 93.17%
+
+[Epoch 218/300]
+  Train Loss: 0.2299, Train Acc: 91.67%
+  Val Loss: 0.2444, Val Acc: 93.33%
+
+[Epoch 219/300]
+  Train Loss: 0.2293, Train Acc: 91.57%
+  Val Loss: 0.2471, Val Acc: 93.02%
+
+[Epoch 220/300]
+  Train Loss: 0.2274, Train Acc: 91.68%
+  Val Loss: 0.2455, Val Acc: 93.33%
+
+[Epoch 221/300]
+  Train Loss: 0.2203, Train Acc: 91.70%
+  Val Loss: 0.2456, Val Acc: 93.27%
+
+[Epoch 222/300]
+  Train Loss: 0.2279, Train Acc: 91.39%
+  Val Loss: 0.2457, Val Acc: 93.33%
+
+[Epoch 223/300]
+  Train Loss: 0.2267, Train Acc: 91.97%
+  Val Loss: 0.2472, Val Acc: 92.96%
+
+[Epoch 224/300]
+  Train Loss: 0.2308, Train Acc: 91.79%
+  Val Loss: 0.2450, Val Acc: 93.22%
+
+[Epoch 225/300]
+  Train Loss: 0.2267, Train Acc: 91.55%
+  Val Loss: 0.2465, Val Acc: 93.22%
+
+[Epoch 226/300]
+  Train Loss: 0.2285, Train Acc: 91.45%
+  Val Loss: 0.2467, Val Acc: 93.12%
+
+[Epoch 227/300]
+  Train Loss: 0.2297, Train Acc: 91.81%
+  Val Loss: 0.2461, Val Acc: 93.17%
+
+[Epoch 228/300]
+  Train Loss: 0.2191, Train Acc: 91.81%
+  Val Loss: 0.2457, Val Acc: 93.27%
+
+[Epoch 229/300]
+  Train Loss: 0.2253, Train Acc: 91.52%
+  Val Loss: 0.2459, Val Acc: 93.12%
+
+[Epoch 230/300]
+  Train Loss: 0.2283, Train Acc: 91.83%
+  Val Loss: 0.2452, Val Acc: 93.27%
+
+[Epoch 231/300]
+  Train Loss: 0.2244, Train Acc: 91.92%
+  Val Loss: 0.2464, Val Acc: 93.02%
+
+[Epoch 232/300]
+  Train Loss: 0.2225, Train Acc: 91.79%
+  Val Loss: 0.2451, Val Acc: 93.27%
+
+[Epoch 233/300]
+  Train Loss: 0.2293, Train Acc: 91.48%
+  Val Loss: 0.2466, Val Acc: 93.12%
+
+[Epoch 234/300]
+  Train Loss: 0.2278, Train Acc: 91.67%
+  Val Loss: 0.2467, Val Acc: 93.17%
+
+[Epoch 235/300]
+  Train Loss: 0.2323, Train Acc: 91.43%
+  Val Loss: 0.2451, Val Acc: 93.22%
+
+[Epoch 236/300]
+  Train Loss: 0.2242, Train Acc: 91.85%
+  Val Loss: 0.2457, Val Acc: 93.12%
+
+[Epoch 237/300]
+  Train Loss: 0.2222, Train Acc: 91.80%
+  Val Loss: 0.2462, Val Acc: 93.12%
+
+[Epoch 238/300]
+  Train Loss: 0.2258, Train Acc: 91.54%
+  Val Loss: 0.2461, Val Acc: 93.22%
+
+[Epoch 239/300]
+  Train Loss: 0.2251, Train Acc: 91.79%
+  Val Loss: 0.2456, Val Acc: 93.17%
+
+[Epoch 240/300]
+  Train Loss: 0.2235, Train Acc: 91.90%
+  Val Loss: 0.2451, Val Acc: 93.17%
+
+[Epoch 241/300]
+  Train Loss: 0.2307, Train Acc: 91.88%
+  Val Loss: 0.2454, Val Acc: 93.27%
+
+[Epoch 242/300]
+  Train Loss: 0.2236, Train Acc: 91.72%
+  Val Loss: 0.2449, Val Acc: 93.22%
+
+[Epoch 243/300]
+  Train Loss: 0.2273, Train Acc: 91.37%
+  Val Loss: 0.2460, Val Acc: 93.22%
+
+[Epoch 244/300]
+  Train Loss: 0.2270, Train Acc: 91.68%
+  Val Loss: 0.2462, Val Acc: 93.12%
+
+[Epoch 245/300]
+  Train Loss: 0.2239, Train Acc: 91.84%
+  Val Loss: 0.2452, Val Acc: 93.27%
+
+[Epoch 246/300]
+  Train Loss: 0.2310, Train Acc: 91.68%
+  Val Loss: 0.2444, Val Acc: 93.38%
+
+[Epoch 247/300]
+  Train Loss: 0.2244, Train Acc: 91.93%
+  Val Loss: 0.2451, Val Acc: 93.43%
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 93.43%)
+
+[Epoch 248/300]
+  Train Loss: 0.2302, Train Acc: 91.79%
+  Val Loss: 0.2465, Val Acc: 92.86%
+
+[Epoch 249/300]
+  Train Loss: 0.2264, Train Acc: 91.79%
+  Val Loss: 0.2463, Val Acc: 93.22%
+
+[Epoch 250/300]
+  Train Loss: 0.2297, Train Acc: 91.52%
+  Val Loss: 0.2449, Val Acc: 93.22%
+
+[Epoch 251/300]
+  Train Loss: 0.2246, Train Acc: 91.76%
+  Val Loss: 0.2463, Val Acc: 93.27%
+
+[Epoch 252/300]
+  Train Loss: 0.2236, Train Acc: 91.67%
+  Val Loss: 0.2468, Val Acc: 93.12%
+
+[Epoch 253/300]
+  Train Loss: 0.2209, Train Acc: 91.81%
+  Val Loss: 0.2446, Val Acc: 93.33%
+
+[Epoch 254/300]
+  Train Loss: 0.2257, Train Acc: 91.66%
+  Val Loss: 0.2455, Val Acc: 93.17%
+
+[Epoch 255/300]
+  Train Loss: 0.2308, Train Acc: 91.70%
+  Val Loss: 0.2463, Val Acc: 93.12%
+
+[Epoch 256/300]
+  Train Loss: 0.2279, Train Acc: 91.55%
+  Val Loss: 0.2461, Val Acc: 93.27%
+
+[Epoch 257/300]
+  Train Loss: 0.2249, Train Acc: 91.66%
+  Val Loss: 0.2467, Val Acc: 93.02%
+
+[Epoch 258/300]
+  Train Loss: 0.2256, Train Acc: 91.75%
+  Val Loss: 0.2454, Val Acc: 93.17%
+
+[Epoch 259/300]
+  Train Loss: 0.2305, Train Acc: 91.40%
+  Val Loss: 0.2453, Val Acc: 93.22%
+
+[Epoch 260/300]
+  Train Loss: 0.2251, Train Acc: 91.68%
+  Val Loss: 0.2457, Val Acc: 93.17%
+
+[Epoch 261/300]
+  Train Loss: 0.2233, Train Acc: 91.81%
+  Val Loss: 0.2442, Val Acc: 93.33%
+
+[Epoch 262/300]
+  Train Loss: 0.2234, Train Acc: 91.67%
+  Val Loss: 0.2457, Val Acc: 93.27%
+
+[Epoch 263/300]
+  Train Loss: 0.2285, Train Acc: 91.74%
+  Val Loss: 0.2450, Val Acc: 93.27%
+
+[Epoch 264/300]
+  Train Loss: 0.2230, Train Acc: 91.88%
+  Val Loss: 0.2443, Val Acc: 93.38%
+
+[Epoch 265/300]
+  Train Loss: 0.2247, Train Acc: 91.98%
+  Val Loss: 0.2445, Val Acc: 93.27%
+
+[Epoch 266/300]
+  Train Loss: 0.2275, Train Acc: 92.01%
+  Val Loss: 0.2444, Val Acc: 93.22%
+
+[Epoch 267/300]
+  Train Loss: 0.2298, Train Acc: 91.57%
+  Val Loss: 0.2445, Val Acc: 93.27%
+
+[Epoch 268/300]
+  Train Loss: 0.2293, Train Acc: 91.58%
+  Val Loss: 0.2458, Val Acc: 93.17%
+
+[Epoch 269/300]
+  Train Loss: 0.2274, Train Acc: 91.32%
+  Val Loss: 0.2446, Val Acc: 93.38%
+
+[Epoch 270/300]
+  Train Loss: 0.2264, Train Acc: 91.83%
+  Val Loss: 0.2452, Val Acc: 93.27%
+
+[Epoch 271/300]
+  Train Loss: 0.2274, Train Acc: 91.53%
+  Val Loss: 0.2457, Val Acc: 93.22%
+
+[Epoch 272/300]
+  Train Loss: 0.2271, Train Acc: 91.55%
+  Val Loss: 0.2452, Val Acc: 93.33%
+
+[Epoch 273/300]
+  Train Loss: 0.2190, Train Acc: 92.03%
+  Val Loss: 0.2453, Val Acc: 93.22%
+
+[Epoch 274/300]
+  Train Loss: 0.2282, Train Acc: 91.62%
+  Val Loss: 0.2477, Val Acc: 93.12%
+
+[Epoch 275/300]
+  Train Loss: 0.2257, Train Acc: 91.77%
+  Val Loss: 0.2461, Val Acc: 93.17%
+
+[Epoch 276/300]
+  Train Loss: 0.2245, Train Acc: 91.80%
+  Val Loss: 0.2460, Val Acc: 93.12%
+
+[Epoch 277/300]
+  Train Loss: 0.2239, Train Acc: 91.76%
+  Val Loss: 0.2451, Val Acc: 93.33%
+
+[Epoch 278/300]
+  Train Loss: 0.2273, Train Acc: 91.31%
+  Val Loss: 0.2449, Val Acc: 93.22%
+
+[Epoch 279/300]
+  Train Loss: 0.2265, Train Acc: 91.50%
+  Val Loss: 0.2449, Val Acc: 93.22%
+
+[Epoch 280/300]
+  Train Loss: 0.2245, Train Acc: 91.83%
+  Val Loss: 0.2465, Val Acc: 93.07%
+
+[Epoch 281/300]
+  Train Loss: 0.2259, Train Acc: 91.89%
+  Val Loss: 0.2456, Val Acc: 93.22%
+
+[Epoch 282/300]
+  Train Loss: 0.2216, Train Acc: 91.61%
+  Val Loss: 0.2462, Val Acc: 93.02%
+
+[Epoch 283/300]
+  Train Loss: 0.2279, Train Acc: 91.80%
+  Val Loss: 0.2446, Val Acc: 93.38%
+
+[Epoch 284/300]
+  Train Loss: 0.2265, Train Acc: 91.61%
+  Val Loss: 0.2448, Val Acc: 93.22%
+
+[Epoch 285/300]
+  Train Loss: 0.2241, Train Acc: 92.03%
+  Val Loss: 0.2461, Val Acc: 93.22%
+
+[Epoch 286/300]
+  Train Loss: 0.2225, Train Acc: 91.81%
+  Val Loss: 0.2452, Val Acc: 93.22%
+
+[Epoch 287/300]
+  Train Loss: 0.2267, Train Acc: 91.68%
+  Val Loss: 0.2455, Val Acc: 93.07%
+
+[Epoch 288/300]
+  Train Loss: 0.2261, Train Acc: 91.85%
+  Val Loss: 0.2464, Val Acc: 93.22%
+
+[Epoch 289/300]
+  Train Loss: 0.2262, Train Acc: 91.79%
+  Val Loss: 0.2457, Val Acc: 93.17%
+
+[Epoch 290/300]
+  Train Loss: 0.2269, Train Acc: 91.62%
+  Val Loss: 0.2452, Val Acc: 93.17%
+
+[Epoch 291/300]
+  Train Loss: 0.2289, Train Acc: 91.31%
+  Val Loss: 0.2460, Val Acc: 93.17%
+
+[Epoch 292/300]
+  Train Loss: 0.2241, Train Acc: 91.83%
+  Val Loss: 0.2446, Val Acc: 93.27%
+
+[Epoch 293/300]
+  Train Loss: 0.2260, Train Acc: 91.77%
+  Val Loss: 0.2459, Val Acc: 93.27%
+
+[Epoch 294/300]
+  Train Loss: 0.2344, Train Acc: 91.49%
+  Val Loss: 0.2462, Val Acc: 93.22%
+
+[Epoch 295/300]
+  Train Loss: 0.2246, Train Acc: 91.54%
+  Val Loss: 0.2453, Val Acc: 93.27%
+
+[Epoch 296/300]
+  Train Loss: 0.2280, Train Acc: 91.61%
+  Val Loss: 0.2460, Val Acc: 93.22%
+
+[Epoch 297/300]
+  Train Loss: 0.2209, Train Acc: 91.89%
+  Val Loss: 0.2461, Val Acc: 93.22%
+
+[Epoch 298/300]
+  Train Loss: 0.2280, Train Acc: 91.76%
+  Val Loss: 0.2457, Val Acc: 93.27%
+
+[Epoch 299/300]
+  Train Loss: 0.2234, Train Acc: 91.76%
+  Val Loss: 0.2456, Val Acc: 93.22%
+
+[Epoch 300/300]
+  Train Loss: 0.2255, Train Acc: 91.68%
+  Val Loss: 0.2449, Val Acc: 93.07%
+
+[학습 완료]
+  - 최고 검증 정확도: 93.43%
+  - 최종 에포크: 300/300
+  - 총 학습 시간: 02:17:56 (8276.22초)
+  - 에포크당 평균 시간: 27.59초
+================================================================================
+학습 종료 시간: 2025-11-20 04:36:19
+로그 파일 저장 완료: logs\training_log_20251120_021821.txt
+================================================================================

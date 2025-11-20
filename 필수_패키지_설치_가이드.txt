@@ -1,0 +1,520 @@
+================================================================================
+                    필수 패키지 설치 가이드
+                    IoT FLAM 프로젝트용
+================================================================================
+
+이 가이드는 GPU를 사용하는 딥러닝 모델을 실행하기 위한 필수 패키지 설치 방법을
+단계별로 안내합니다. NVIDIA 그래픽 카드 드라이버 버전에 맞는 CUDA와 호환되는
+PyTorch, TensorFlow 버전을 설치하는 것이 중요합니다.
+
+================================================================================
+1단계: 시스템 환경 확인
+================================================================================
+
+1.1 Python 버전 확인
+--------------------
+Python 3.8 이상이 필요합니다. (권장: Python 3.9 또는 3.10)
+
+명령어:
+    python --version
+    또는
+    python3 --version
+
+1.2 NVIDIA 그래픽 카드 드라이버 버전 확인
+----------------------------------------
+Windows:
+    - NVIDIA 제어판 > 시스템 정보 > 드라이버 버전 확인
+    - 또는 명령 프롬프트(cmd)에서:
+        nvidia-smi
+
+Linux:
+    nvidia-smi
+
+출력 예시:
+    Driver Version: 535.xx.xx
+    CUDA Version: 12.2
+
+참고: CUDA Version은 드라이버가 지원하는 최대 CUDA 버전을 의미합니다.
+      실제 설치할 CUDA 툴킷 버전은 이보다 낮거나 같아야 합니다.
+
+1.3 CUDA 호환성 확인
+--------------------
+NVIDIA 드라이버 버전에 따른 CUDA 지원 버전:
+
+드라이버 버전    | 지원 CUDA 버전
+----------------|------------------
+450.xx 이상      | CUDA 11.0 이상
+460.xx 이상      | CUDA 11.2 이상
+470.xx 이상      | CUDA 11.4 이상
+510.xx 이상      | CUDA 11.6 이상
+520.xx 이상      | CUDA 11.8 이상
+525.xx 이상      | CUDA 12.0 이상
+535.xx 이상      | CUDA 12.2 이상
+
+================================================================================
+2단계: CUDA 툴킷 설치 (선택사항 - PyTorch는 자체 CUDA 포함)
+================================================================================
+
+참고: PyTorch는 자체적으로 CUDA 런타임을 포함하고 있어 별도 CUDA 툴킷 설치가
+      필수는 아닙니다. 하지만 TensorFlow GPU 지원을 위해서는 CUDA 툴킷이 필요할
+      수 있습니다.
+
+2.1 CUDA 툴킷 다운로드 및 설치
+------------------------------
+1. NVIDIA CUDA Toolkit 다운로드 페이지 방문:
+   https://developer.nvidia.com/cuda-downloads
+
+2. 시스템에 맞는 버전 선택:
+   - Windows: exe (local) 또는 exe (network)
+   - Linux: 적절한 배포판 선택
+
+3. 설치 후 환경 변수 확인:
+   Windows:
+     - 시스템 환경 변수에 CUDA_PATH 추가 확인
+   
+   Linux:
+     - ~/.bashrc 또는 ~/.zshrc에 추가:
+       export PATH=/usr/local/cuda/bin:$PATH
+       export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+2.2 cuDNN 설치 (TensorFlow GPU용)
+----------------------------------
+TensorFlow GPU를 사용하려면 cuDNN이 필요합니다.
+
+1. cuDNN 다운로드:
+   https://developer.nvidia.com/cudnn
+   (NVIDIA 계정 필요)
+
+2. CUDA 버전에 맞는 cuDNN 다운로드 및 설치
+
+================================================================================
+3단계: Python 가상 환경 생성 및 활성화 (필수)
+================================================================================
+
+가상 환경을 사용하면 프로젝트별로 패키지를 격리하여 관리할 수 있습니다.
+다른 프로젝트와의 패키지 버전 충돌을 방지하고, 깨끗한 환경을 유지할 수 있습니다.
+
+3.1 가상 환경 생성
+------------------
+프로젝트 루트 디렉토리에서 실행:
+
+Windows:
+    python -m venv venv
+
+Linux/Mac:
+    python3 -m venv venv
+
+참고: venv는 가상 환경이 저장될 폴더 이름입니다. 다른 이름을 사용할 수도 있습니다.
+      예: python -m venv myenv
+
+3.2 가상 환경 활성화
+-------------------
+가상 환경을 활성화해야 패키지를 설치하고 사용할 수 있습니다.
+
+Windows (PowerShell):
+    .\venv\Scripts\Activate.ps1
+    
+    만약 실행 정책 오류가 발생하면:
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+    위 명령어를 먼저 실행한 후 다시 활성화 시도
+
+Windows (Command Prompt):
+    venv\Scripts\activate.bat
+
+Linux/Mac:
+    source venv/bin/activate
+
+가상 환경이 활성화되면 프롬프트 앞에 (venv)가 표시됩니다.
+예: (venv) PS D:\iot\FLAM>
+
+3.3 가상 환경 비활성화
+---------------------
+작업이 끝나면 가상 환경을 비활성화할 수 있습니다:
+
+    deactivate
+
+3.4 가상 환경 확인
+-----------------
+가상 환경이 제대로 활성화되었는지 확인:
+
+Windows:
+    where python
+    (출력에 venv\Scripts\python.exe가 포함되어야 함)
+
+Linux/Mac:
+    which python
+    (출력에 venv/bin/python이 포함되어야 함)
+
+또는 Python에서 확인:
+    python -c "import sys; print(sys.executable)"
+    (출력에 venv 경로가 포함되어야 함)
+
+3.5 가상 환경 삭제 (필요시)
+--------------------------
+가상 환경을 삭제하려면:
+1. 먼저 비활성화: deactivate
+2. venv 폴더를 삭제
+
+Windows:
+    rmdir /s venv
+
+Linux/Mac:
+    rm -rf venv
+
+주의: 가상 환경을 삭제하면 설치된 모든 패키지가 함께 삭제됩니다.
+
+================================================================================
+4단계: PyTorch 설치 (CUDA 지원)
+================================================================================
+
+PyTorch는 자체 CUDA 런타임을 포함하므로, 드라이버 버전에 맞는 PyTorch를 설치하면
+됩니다.
+
+4.1 PyTorch 공식 설치 페이지 확인
+----------------------------------
+https://pytorch.org/get-started/locally/
+
+4.2 드라이버 버전에 따른 PyTorch 설치 명령어
+--------------------------------------------
+
+[드라이버 535.xx 이상 - CUDA 12.x 지원]
+----------------------------------------
+Windows:
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+Linux:
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+[드라이버 520.xx 이상 - CUDA 11.8 지원]
+----------------------------------------
+Windows:
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+Linux:
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+[드라이버 470.xx 이상 - CUDA 11.7 지원]
+----------------------------------------
+Windows:
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
+
+Linux:
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
+
+[드라이버가 낮거나 CPU만 사용하는 경우]
+----------------------------------------
+    pip install torch torchvision torchaudio
+
+4.3 PyTorch CUDA 설치 확인
+---------------------------
+Python에서 확인:
+
+    python
+    >>> import torch
+    >>> print(torch.__version__)
+    >>> print(torch.cuda.is_available())
+    >>> print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU")
+    >>> exit()
+
+출력 예시:
+    2.1.0+cu121
+    True
+    NVIDIA GeForce RTX 3080
+
+================================================================================
+5단계: TensorFlow GPU 설치
+================================================================================
+
+5.1 TensorFlow GPU 버전 확인
+----------------------------
+TensorFlow는 CUDA 버전에 따라 호환되는 버전이 다릅니다.
+
+CUDA 버전    | TensorFlow 버전    | cuDNN 버전
+------------|-------------------|------------
+CUDA 11.8    | TensorFlow 2.13+  | 8.6
+CUDA 11.2    | TensorFlow 2.10   | 8.1
+CUDA 11.0    | TensorFlow 2.9    | 8.0
+
+5.2 TensorFlow 설치
+-------------------
+[최신 버전 - CUDA 11.8 이상 권장]
+    pip install tensorflow[and-cuda]
+
+또는
+
+[CUDA 11.8용]
+    pip install tensorflow==2.13.0
+
+[CUDA 11.2용]
+    pip install tensorflow==2.10.0
+
+5.3 TensorFlow GPU 설치 확인
+----------------------------
+Python에서 확인:
+
+    python
+    >>> import tensorflow as tf
+    >>> print(tf.__version__)
+    >>> print(tf.config.list_physical_devices('GPU'))
+    >>> exit()
+
+출력 예시:
+    2.13.0
+    [PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+
+================================================================================
+6단계: 기타 필수 패키지 설치
+================================================================================
+
+6.1 기본 패키지 설치
+-------------------
+    pip install numpy
+    pip install Pillow
+    pip install matplotlib
+    pip install tqdm
+
+6.2 데이터베이스 패키지
+---------------------
+    pip install pymongo
+
+6.3 한 번에 설치 (requirements.txt 사용)
+-----------------------------------------
+프로젝트 루트 디렉토리에 있는 requirements.txt 파일을 사용:
+
+    pip install -r requirements.txt
+
+참고: requirements.txt에는 버전이 명시되어 있지 않으므로, 위의 단계에서
+      설치한 PyTorch와 TensorFlow 버전과 호환되는 최신 버전이 설치됩니다.
+
+================================================================================
+7단계: 전체 설치 확인
+================================================================================
+
+7.1 설치 스크립트 실행
+---------------------
+다음 Python 스크립트를 실행하여 모든 패키지가 올바르게 설치되었는지 확인:
+
+    python -c "
+    import sys
+    print('Python 버전:', sys.version)
+    print()
+    
+    # PyTorch 확인
+    try:
+        import torch
+        print('PyTorch 버전:', torch.__version__)
+        print('CUDA 사용 가능:', torch.cuda.is_available())
+        if torch.cuda.is_available():
+            print('CUDA 버전:', torch.version.cuda)
+            print('GPU 이름:', torch.cuda.get_device_name(0))
+        print()
+    except ImportError:
+        print('PyTorch 설치되지 않음')
+        print()
+    
+    # TensorFlow 확인
+    try:
+        import tensorflow as tf
+        print('TensorFlow 버전:', tf.__version__)
+        gpus = tf.config.list_physical_devices('GPU')
+        print('GPU 사용 가능:', len(gpus) > 0)
+        if gpus:
+            print('GPU 목록:', [gpu.name for gpu in gpus])
+        print()
+    except ImportError:
+        print('TensorFlow 설치되지 않음')
+        print()
+    
+    # 기타 패키지 확인
+    packages = ['numpy', 'PIL', 'matplotlib', 'tqdm', 'pymongo']
+    for pkg in packages:
+        try:
+            mod = __import__(pkg)
+            version = getattr(mod, '__version__', '버전 정보 없음')
+            print(f'{pkg}: {version}')
+        except ImportError:
+            print(f'{pkg}: 설치되지 않음')
+    "
+
+7.2 예상 출력
+-------------
+Python 버전: 3.10.x
+
+PyTorch 버전: 2.1.0+cu121
+CUDA 사용 가능: True
+CUDA 버전: 12.1
+GPU 이름: NVIDIA GeForce RTX 3080
+
+TensorFlow 버전: 2.13.0
+GPU 사용 가능: True
+GPU 목록: ['/physical_device:GPU:0']
+
+numpy: 1.24.3
+PIL: 10.0.0
+matplotlib: 3.7.2
+tqdm: 4.66.1
+pymongo: 4.5.0
+
+================================================================================
+8단계: 문제 해결
+================================================================================
+
+8.1 PyTorch CUDA가 인식되지 않는 경우
+-------------------------------------
+1. NVIDIA 드라이버 재설치
+2. PyTorch 재설치 (올바른 CUDA 버전 선택)
+3. 시스템 재부팅
+
+8.2 TensorFlow GPU가 인식되지 않는 경우
+---------------------------------------
+1. CUDA 툴킷 설치 확인
+2. cuDNN 설치 확인
+3. 환경 변수 확인 (CUDA_PATH, LD_LIBRARY_PATH)
+4. TensorFlow 재설치
+
+8.3 버전 충돌 문제
+------------------
+가상 환경을 사용하여 프로젝트별로 패키지를 격리하는 것을 강력히 권장합니다.
+
+8.4 메모리 부족 오류
+--------------------
+배치 크기를 줄이거나 모델 크기를 조정하세요:
+- CNN 모델: batch_size를 16 또는 8로 줄임
+- Federated Learning: LOCAL_BATCH_SIZE를 16으로 줄임
+
+================================================================================
+9단계: 빠른 설치 스크립트 (자동화)
+================================================================================
+
+다음 스크립트를 실행하면 시스템을 자동으로 감지하고 적절한 버전을 설치합니다.
+
+Windows (install_packages.bat):
+--------------------------------
+@echo off
+echo ========================================
+echo 필수 패키지 자동 설치
+echo ========================================
+echo.
+
+REM 가상 환경 생성
+python -m venv venv
+call venv\Scripts\activate.bat
+
+REM NVIDIA 드라이버 확인
+echo NVIDIA 드라이버 확인 중...
+nvidia-smi >nul 2>&1
+if %errorlevel% neq 0 (
+    echo 경고: NVIDIA 드라이버를 찾을 수 없습니다.
+    echo CPU 버전으로 설치합니다.
+    pip install torch torchvision torchaudio
+) else (
+    echo CUDA 12.1용 PyTorch 설치 중...
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+)
+
+REM TensorFlow 설치
+echo TensorFlow 설치 중...
+pip install tensorflow[and-cuda]
+
+REM 기타 패키지 설치
+echo 기타 패키지 설치 중...
+pip install numpy Pillow matplotlib tqdm pymongo
+
+echo.
+echo ========================================
+echo 설치 완료!
+echo ========================================
+pause
+
+Linux/Mac (install_packages.sh):
+---------------------------------
+#!/bin/bash
+
+echo "========================================"
+echo "필수 패키지 자동 설치"
+echo "========================================"
+echo ""
+
+# 가상 환경 생성
+python3 -m venv venv
+source venv/bin/activate
+
+# NVIDIA 드라이버 확인
+if command -v nvidia-smi &> /dev/null; then
+    echo "CUDA 12.1용 PyTorch 설치 중..."
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+else
+    echo "경고: NVIDIA 드라이버를 찾을 수 없습니다."
+    echo "CPU 버전으로 설치합니다."
+    pip install torch torchvision torchaudio
+fi
+
+# TensorFlow 설치
+echo "TensorFlow 설치 중..."
+pip install tensorflow[and-cuda]
+
+# 기타 패키지 설치
+echo "기타 패키지 설치 중..."
+pip install numpy Pillow matplotlib tqdm pymongo
+
+echo ""
+echo "========================================"
+echo "설치 완료!"
+echo "========================================"
+
+================================================================================
+10단계: 프로젝트 실행 전 체크리스트
+================================================================================
+
+□ Python 3.8 이상 설치됨
+□ NVIDIA 드라이버 설치 및 확인됨 (nvidia-smi 실행 가능)
+□ 가상 환경 생성됨 (python -m venv venv)
+□ 가상 환경 활성화됨 (프롬프트에 (venv) 표시 확인)
+□ 가상 환경이 제대로 활성화되었는지 확인됨 (where python 또는 which python)
+□ PyTorch 설치 및 CUDA 인식 확인됨
+□ TensorFlow 설치 및 GPU 인식 확인됨
+□ 기타 필수 패키지 설치됨 (numpy, Pillow, matplotlib, tqdm, pymongo, scikit-learn)
+□ MongoDB 연결 정보 확인 (utils/Dataset/download_labeled_layers.py)
+
+================================================================================
+추가 참고사항
+================================================================================
+
+1. PyTorch와 TensorFlow는 서로 다른 CUDA 버전을 사용할 수 있습니다.
+   - PyTorch는 자체 CUDA 런타임 포함
+   - TensorFlow는 시스템 CUDA 툴킷 필요
+
+2. 최신 드라이버를 사용하면 대부분의 CUDA 버전을 지원합니다.
+   - 드라이버 535.xx 이상: CUDA 12.x 지원
+   - 드라이버 520.xx 이상: CUDA 11.8 지원
+
+3. 프로젝트에서 사용하는 주요 모델:
+   - U-Net (TensorFlow): Federated Learning용
+   - CNN Classifier (PyTorch): 결함 유형 분류
+   - AprilGAN (PyTorch): 제로샷 결함 분류
+
+4. GPU 메모리 요구사항:
+   - 최소: 4GB VRAM
+   - 권장: 8GB VRAM 이상
+   - 배치 크기를 조정하여 메모리 사용량 조절 가능
+
+5. 설치 시간:
+   - PyTorch (CUDA): 약 2-3GB, 5-10분
+   - TensorFlow: 약 500MB, 2-3분
+   - 기타 패키지: 약 100MB, 1-2분
+
+================================================================================
+문의 및 지원
+================================================================================
+
+설치 중 문제가 발생하면:
+1. 에러 메시지를 자세히 확인
+2. Python 버전과 패키지 버전 호환성 확인
+3. 가상 환경 사용 여부 확인
+4. NVIDIA 드라이버 최신 버전 확인
+
+================================================================================
+작성일: 2024
+프로젝트: IoT FLAM (Federated Learning for Additive Manufacturing)
+================================================================================
+

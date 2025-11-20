@@ -34,7 +34,8 @@ from utils.CNN.defect_type_classifier import (
     DefectTypeDataset, 
     DefectTypeClassifier,
     analyze_defect_types,
-    extract_defect_types_from_metadata
+    extract_defect_types_from_metadata,
+    custom_collate_fn
 )
 
 
@@ -48,12 +49,17 @@ def load_model(checkpoint_path: str, device: torch.device):
     idx_to_name = checkpoint['idx_to_name']
     num_classes = len(defect_type_mapping)
     
+    # 체크포인트에서 모델 정보 가져오기 (없으면 기본값 사용)
+    model_name = checkpoint.get('model_name', 'resnet34')
+    pretrained = checkpoint.get('pretrained', True)
+    
     # 모델 생성 및 가중치 로드
-    model = DefectTypeClassifier(num_classes).to(device)
+    model = DefectTypeClassifier(num_classes, model_name=model_name, pretrained=False).to(device)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     
     print(f"  - 클래스 수: {num_classes}")
+    print(f"  - 모델 아키텍처: {model_name}")
     print(f"  - 검증 정확도: {checkpoint.get('val_acc', 'N/A'):.2f}%")
     print(f"  - 학습 에포크: {checkpoint.get('epoch', 'N/A')}")
     
@@ -61,12 +67,18 @@ def load_model(checkpoint_path: str, device: torch.device):
 
 
 def test_model(model, dataset, defect_type_mapping, idx_to_name, device, batch_size=32):
-    """모델 테스트 및 예측"""
+    """모델 테스트 및 예측 (다중 레이블 분류)"""
     print(f"\n[모델 테스트]")
     print(f"  - 테스트 샘플 수: {len(dataset)}")
     print(f"  - 배치 크기: {batch_size}")
+    print(f"  - 다중 레이블 분류 모드 (Threshold: 0.5)")
     
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    dataloader = DataLoader(
+        dataset, 
+        batch_size=batch_size, 
+        shuffle=False,
+        collate_fn=custom_collate_fn
+    )
     
     all_predictions = []
     all_labels = []
@@ -77,28 +89,35 @@ def test_model(model, dataset, defect_type_mapping, idx_to_name, device, batch_s
     total = 0
     
     with torch.no_grad():
-        for images, labels, defect_types, paths in dataloader:
+        for images, labels, defect_types_list, paths in dataloader:
             images = images.to(device)
             labels = labels.to(device)
             
             outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
             
-            all_predictions.extend(predicted.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-            all_defect_types.extend(defect_types)
+            # 다중 레이블 분류: sigmoid + threshold
+            probs = torch.sigmoid(outputs.data)
+            predicted = (probs > 0.5).float()  # threshold = 0.5
+            
+            # 각 샘플에 대해 예측된 레이블과 실제 레이블이 일치하는지 확인
+            # 다중 레이블에서는 모든 레이블이 정확히 일치해야 정확한 것으로 간주
+            batch_correct = (predicted == labels).all(dim=1).sum().item()
+            
+            all_predictions.append(predicted.cpu().numpy())
+            all_labels.append(labels.cpu().numpy())
+            all_defect_types.extend(defect_types_list)
             all_paths.extend(paths)
             
             total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            correct += batch_correct
     
     accuracy = 100 * correct / total
     
-    print(f"  - 전체 정확도: {accuracy:.2f}% ({correct}/{total})")
+    print(f"  - 전체 정확도: {accuracy:.2f}% ({correct}/{total}) (다중 레이블 정확도)")
     
     return {
-        'predictions': np.array(all_predictions),
-        'labels': np.array(all_labels),
+        'predictions': np.vstack(all_predictions) if all_predictions else np.array([]),
+        'labels': np.vstack(all_labels) if all_labels else np.array([]),
         'defect_types': all_defect_types,
         'paths': all_paths,
         'accuracy': accuracy
@@ -106,119 +125,126 @@ def test_model(model, dataset, defect_type_mapping, idx_to_name, device, batch_s
 
 
 def analyze_results(results: Dict, idx_to_name: Dict, defect_type_mapping: Dict):
-    """결과 상세 분석"""
-    predictions = results['predictions']
-    labels = results['labels']
+    """결과 상세 분석 (다중 레이블 분류)"""
+    predictions = results['predictions']  # (N, num_classes) 형태의 멀티-핫 벡터
+    labels = results['labels']  # (N, num_classes) 형태의 멀티-핫 벡터
     defect_types = results['defect_types']
     
-    print(f"\n[결과 분석]")
+    print(f"\n[결과 분석] (다중 레이블 분류)")
     print("=" * 60)
     
-    # 클래스별 정확도
+    # 클래스별 정확도 (각 클래스가 정확히 예측된 비율)
     print("\n[클래스별 정확도]")
+    num_classes = len(idx_to_name)
     class_correct = defaultdict(int)
     class_total = defaultdict(int)
     
-    for pred, label in zip(predictions, labels):
-        class_total[label] += 1
-        if pred == label:
-            class_correct[label] += 1
+    for pred_vec, label_vec in zip(predictions, labels):
+        for class_idx in range(num_classes):
+            if label_vec[class_idx] == 1.0:  # 실제 레이블에 해당 클래스가 있는 경우
+                class_total[class_idx] += 1
+                if pred_vec[class_idx] == label_vec[class_idx]:  # 예측이 맞은 경우
+                    class_correct[class_idx] += 1
     
-    for idx in sorted(class_total.keys()):
+    for idx in sorted(idx_to_name.keys()):
         class_name = idx_to_name[idx]
         class_acc = 100 * class_correct[idx] / class_total[idx] if class_total[idx] > 0 else 0
         print(f"  - {class_name:30s}: {class_acc:6.2f}% ({class_correct[idx]}/{class_total[idx]})")
     
-    # 혼동 행렬
-    print("\n[혼동 행렬 생성 중...]")
-    if HAS_SKLEARN:
-        cm = confusion_matrix(labels, predictions)
-        
-        # 분류 리포트
-        print("\n[분류 리포트]")
-        target_names = [idx_to_name[i] for i in sorted(idx_to_name.keys())]
-        report = classification_report(
-            labels, predictions, 
-            target_names=target_names,
-            digits=4
-        )
-        print(report)
-    else:
-        # sklearn 없이 직접 계산
-        num_classes = len(idx_to_name)
-        cm = np.zeros((num_classes, num_classes), dtype=int)
-        for true_label, pred_label in zip(labels, predictions):
-            cm[true_label][pred_label] += 1
-        
-        target_names = [idx_to_name[i] for i in sorted(idx_to_name.keys())]
-        
-        print("\n[혼동 행렬 (수치)]")
-        print("실제\\예측", end="")
-        for name in target_names:
-            print(f"\t{name[:10]}", end="")
-        print()
-        for i, true_name in enumerate(target_names):
-            print(f"{true_name[:10]}", end="")
-            for j in range(num_classes):
-                print(f"\t{cm[i][j]}", end="")
-            print()
+    # 다중 레이블 분류에서는 혼동 행렬이 복잡하므로 간단한 통계만 제공
+    print("\n[클래스별 예측 통계]")
+    num_classes = len(idx_to_name)
+    target_names = [idx_to_name[i] for i in sorted(idx_to_name.keys())]
     
-    # 주요 오분류 분석
-    print("\n[주요 오분류 분석] (상위 10개)")
-    error_analysis = defaultdict(int)
+    # 각 클래스별로 True Positive, False Positive, False Negative 계산
+    print("\n클래스별 상세 통계:")
+    for class_idx in range(num_classes):
+        class_name = target_names[class_idx]
+        tp = fp = fn = tn = 0
+        
+        for pred_vec, label_vec in zip(predictions, labels):
+            pred_positive = pred_vec[class_idx] == 1.0
+            label_positive = label_vec[class_idx] == 1.0
+            
+            if pred_positive and label_positive:
+                tp += 1
+            elif pred_positive and not label_positive:
+                fp += 1
+            elif not pred_positive and label_positive:
+                fn += 1
+            else:
+                tn += 1
+        
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+        
+        print(f"  {class_name:30s}: Precision={precision:.4f}, Recall={recall:.4f}, F1={f1:.4f} (TP={tp}, FP={fp}, FN={fn})")
     
-    for pred, label, defect_type in zip(predictions, labels, defect_types):
-        if pred != label:
-            pred_name = idx_to_name[pred]
-            true_name = idx_to_name[label]
-            error_analysis[f"{true_name} -> {pred_name}"] += 1
-    
-    sorted_errors = sorted(error_analysis.items(), key=lambda x: x[1], reverse=True)
-    for error_pair, count in sorted_errors[:10]:
-        print(f"  - {error_pair:50s}: {count}개")
+    # 간단한 혼동 행렬 (각 클래스별 예측/실제 일치 여부)
+    cm = np.zeros((num_classes, 2, 2), dtype=int)  # 각 클래스별로 2x2 행렬
+    for class_idx in range(num_classes):
+        for pred_vec, label_vec in zip(predictions, labels):
+            pred_positive = pred_vec[class_idx] == 1.0
+            label_positive = label_vec[class_idx] == 1.0
+            
+            if pred_positive and label_positive:
+                cm[class_idx][0][0] += 1  # TP
+            elif pred_positive and not label_positive:
+                cm[class_idx][0][1] += 1  # FP
+            elif not pred_positive and label_positive:
+                cm[class_idx][1][0] += 1  # FN
+            else:
+                cm[class_idx][1][1] += 1  # TN
     
     return cm, target_names
 
 
 def visualize_results(cm, target_names, save_path="test_results_confusion_matrix.png"):
-    """결과 시각화"""
+    """결과 시각화 (다중 레이블 분류용 - 각 클래스별 Precision/Recall)"""
     if not HAS_MATPLOTLIB:
         print(f"\n[시각화 건너뜀] matplotlib/seaborn이 설치되지 않았습니다.")
         return
     
     print(f"\n[결과 시각화] {save_path}")
     
-    # 혼동 행렬 시각화
-    plt.figure(figsize=(14, 12))
+    # 각 클래스별 Precision/Recall을 막대 그래프로 시각화
+    num_classes = len(target_names)
+    precisions = []
+    recalls = []
+    f1_scores = []
     
-    # 정규화된 혼동 행렬
-    cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-    cm_normalized = np.nan_to_num(cm_normalized)
+    for class_idx in range(num_classes):
+        tp = cm[class_idx][0][0]
+        fp = cm[class_idx][0][1]
+        fn = cm[class_idx][1][0]
+        
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+        
+        precisions.append(precision)
+        recalls.append(recall)
+        f1_scores.append(f1)
     
-    if HAS_SKLEARN:
-        sns.heatmap(
-            cm_normalized, 
-            annot=True, 
-            fmt='.2f', 
-            cmap='Blues',
-            xticklabels=target_names,
-            yticklabels=target_names,
-            cbar_kws={'label': '정규화된 빈도'}
-        )
-    else:
-        # seaborn 없이 matplotlib만 사용
-        plt.imshow(cm_normalized, cmap='Blues', aspect='auto')
-        plt.colorbar(label='정규화된 빈도')
-        plt.xticks(range(len(target_names)), target_names, rotation=45, ha='right')
-        plt.yticks(range(len(target_names)), target_names)
-        for i in range(len(target_names)):
-            for j in range(len(target_names)):
-                plt.text(j, i, f'{cm_normalized[i, j]:.2f}', 
-                        ha='center', va='center', color='black' if cm_normalized[i, j] < 0.5 else 'white')
+    # 막대 그래프
+    x = np.arange(num_classes)
+    width = 0.25
     
-    plt.title('혼동 행렬 (Confusion Matrix)', fontsize=16, pad=20)
-    plt.xlabel('예측 레이블', fontsize=12)
-    plt.ylabel('실제 레이블', fontsize=12)
+    fig, ax = plt.subplots(figsize=(14, 8))
+    ax.bar(x - width, precisions, width, label='Precision', alpha=0.8)
+    ax.bar(x, recalls, width, label='Recall', alpha=0.8)
+    ax.bar(x + width, f1_scores, width, label='F1-Score', alpha=0.8)
+    
+    ax.set_xlabel('클래스', fontsize=12)
+    ax.set_ylabel('점수', fontsize=12)
+    ax.set_title('클래스별 Precision, Recall, F1-Score (다중 레이블 분류)', fontsize=16, pad=20)
+    ax.set_xticks(x)
+    ax.set_xticklabels(target_names, rotation=45, ha='right')
+    ax.legend()
+    ax.set_ylim([0, 1.1])
+    ax.grid(axis='y', alpha=0.3)
+    
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     print(f"  - 저장 완료: {save_path}")
@@ -256,11 +282,11 @@ def test_classifier(checkpoint_path=None, data_dir="data/labeled_layers",
     print(f"\n[데이터 준비]")
     print(f"  - 데이터 디렉토리: {data_dir}")
     
-    # 데이터셋 생성
+    # 데이터셋 생성 (학습 시와 동일한 transform 사용)
     transform = transforms.Compose([
-        transforms.Resize((128, 128)),
+        transforms.Resize((224, 224)),  # 학습 시와 동일한 크기
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # ImageNet 정규화
     ])
     
     # 전체 데이터셋 로드
@@ -270,16 +296,23 @@ def test_classifier(checkpoint_path=None, data_dir="data/labeled_layers",
         print("\n[오류] 데이터셋이 비어있습니다.")
         return
     
-    # 학습/검증 분할 (학습 시와 동일한 시드 사용)
-    train_size = int(0.8 * len(full_dataset))
-    val_size = len(full_dataset) - train_size
-    _, test_dataset = torch.utils.data.random_split(
-        full_dataset, [train_size, val_size],
+    # 데이터 분할 (학습 시와 동일한 70:15:15 분할)
+    # 학습 시와 동일한 시드 사용하여 테스트 데이터셋만 추출
+    total_size = len(full_dataset)
+    train_size = int(0.7 * total_size)
+    val_size = int(0.15 * total_size)
+    test_size = total_size - train_size - val_size
+    
+    train_indices, val_indices, test_indices = torch.utils.data.random_split(
+        range(len(full_dataset)), [train_size, val_size, test_size],
         generator=torch.Generator().manual_seed(42)
     )
     
+    # 테스트 데이터셋만 사용
+    test_dataset = torch.utils.data.Subset(full_dataset, test_indices.indices)
+    
     print(f"  - 전체 데이터: {len(full_dataset)}개")
-    print(f"  - 테스트 데이터: {len(test_dataset)}개")
+    print(f"  - 테스트 데이터: {len(test_dataset)}개 (15%)")
     
     # 모델 테스트
     results = test_model(model, test_dataset, defect_type_mapping, idx_to_name, device, batch_size)
@@ -290,20 +323,24 @@ def test_classifier(checkpoint_path=None, data_dir="data/labeled_layers",
     # 시각화
     visualize_results(cm, target_names, "test_results_confusion_matrix.png")
     
-    # 샘플 예측 결과
+    # 샘플 예측 결과 (다중 레이블)
     print(f"\n[샘플 예측 결과] (10개)")
     print("=" * 60)
     for i in range(min(10, len(results['predictions']))):
-        pred_idx = results['predictions'][i]
-        true_idx = results['labels'][i]
-        pred_name = idx_to_name[pred_idx]
-        true_name = idx_to_name[true_idx]
-        is_correct = "✓" if pred_idx == true_idx else "✗"
+        pred_vec = results['predictions'][i]
+        label_vec = results['labels'][i]
+        
+        # 예측된 클래스들
+        pred_classes = [idx_to_name[j] for j in range(len(pred_vec)) if pred_vec[j] == 1.0]
+        # 실제 클래스들
+        true_classes = [idx_to_name[j] for j in range(len(label_vec)) if label_vec[j] == 1.0]
+        
+        is_correct = (pred_vec == label_vec).all()
+        correct_mark = "정확" if is_correct else "오류"
         
         print(f"\n  샘플 {i+1}: {Path(results['paths'][i]).name}")
-        print(f"    - 실제: {true_name}")
-        correct_mark = "정확" if pred_idx == true_idx else "오류"
-        print(f"    - 예측: {pred_name} ({correct_mark})")
+        print(f"    - 실제: {', '.join(true_classes) if true_classes else 'Normal'}")
+        print(f"    - 예측: {', '.join(pred_classes) if pred_classes else 'Normal'} ({correct_mark})")
     
     print("\n" + "=" * 60)
     print("테스트 완료!")

@@ -90,6 +90,29 @@ def extract_defect_types_from_metadata(metadata: dict) -> List[str]:
     return defect_types if defect_types else ["Normal"]
 
 
+def custom_collate_fn(batch):
+    """
+    다중 레이블 분류를 위한 커스텀 collate 함수
+    defect_types와 path는 리스트로 유지하고, 이미지와 레이블만 텐서로 스택
+    """
+    images = []
+    labels = []
+    defect_types_list = []
+    paths = []
+    
+    for image, label, defect_types, path in batch:
+        images.append(image)
+        labels.append(label)
+        defect_types_list.append(defect_types)  # 리스트 그대로 유지
+        paths.append(path)  # 문자열 그대로 유지
+    
+    # 이미지와 레이블만 텐서로 스택
+    images = torch.stack(images, dim=0)
+    labels = torch.stack(labels, dim=0)
+    
+    return images, labels, defect_types_list, paths
+
+
 class TransformWrapper(Dataset):
     """데이터셋에 다른 transform을 적용하는 Wrapper"""
     def __init__(self, dataset, transform=None):
@@ -397,28 +420,71 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
             return
         
         # 데이터 분할 (70% 학습, 15% 검증, 15% 테스트)
+        # 데이터를 랜덤하게 섞은 후 분할하여 불균형 방지
         total_size = len(base_dataset)
         train_size = int(0.7 * total_size)
         val_size = int(0.15 * total_size)
         test_size = total_size - train_size - val_size  # 나머지가 테스트
         
-        train_indices, val_indices, test_indices = torch.utils.data.random_split(
-            range(len(base_dataset)), [train_size, val_size, test_size],
-            generator=torch.Generator().manual_seed(42)
-        )
+        # 인덱스를 랜덤하게 섞기
+        indices = torch.randperm(total_size, generator=torch.Generator().manual_seed(42)).tolist()
+        
+        # 섞인 인덱스를 비율에 따라 분할
+        train_indices = indices[:train_size]
+        val_indices = indices[train_size:train_size + val_size]
+        test_indices = indices[train_size + val_size:]
+        
+        print(f"\n[데이터 분할] 랜덤 셔플 후 분할")
+        print(f"  - 학습: {len(train_indices)}개 (70%)")
+        print(f"  - 검증: {len(val_indices)}개 (15%)")
+        print(f"  - 테스트: {len(test_indices)}개 (15%)")
+        
+        # 레이블 분포 확인 (단일 레이블 vs 다중 레이블)
+        def count_label_types(indices_list):
+            single = 0
+            multi = 0
+            for idx in indices_list:
+                label_vector = base_dataset.labels[idx]
+                active_labels = label_vector.sum().item()
+                if active_labels == 1:
+                    single += 1
+                else:
+                    multi += 1
+            return single, multi
+        
+        train_single, train_multi = count_label_types(train_indices)
+        val_single, val_multi = count_label_types(val_indices)
+        test_single, test_multi = count_label_types(test_indices)
+        
+        print(f"\n[레이블 분포 확인]")
+        print(f"  학습: 단일 레이블 {train_single}개 ({100*train_single/len(train_indices):.1f}%), "
+              f"다중 레이블 {train_multi}개 ({100*train_multi/len(train_indices):.1f}%)")
+        print(f"  검증: 단일 레이블 {val_single}개 ({100*val_single/len(val_indices):.1f}%), "
+              f"다중 레이블 {val_multi}개 ({100*val_multi/len(val_indices):.1f}%)")
+        print(f"  테스트: 단일 레이블 {test_single}개 ({100*test_single/len(test_indices):.1f}%), "
+              f"다중 레이블 {test_multi}개 ({100*test_multi/len(test_indices):.1f}%)")
+        
+        # 경고 메시지
+        train_single_ratio = train_single / len(train_indices)
+        val_single_ratio = val_single / len(val_indices)
+        if abs(val_single_ratio - train_single_ratio) > 0.05:  # 5% 이상 차이
+            print(f"\n[경고] 단일 레이블 비율 차이가 큽니다: "
+                  f"학습 {train_single_ratio*100:.1f}% vs 검증 {val_single_ratio*100:.1f}% "
+                  f"(차이: {abs(val_single_ratio - train_single_ratio)*100:.1f}%p)")
+            print(f"  -> 검증 정확도가 학습 정확도보다 높게 나타날 수 있습니다.")
         
         # 각각 다른 transform 적용
         train_dataset = TransformWrapper(
-            torch.utils.data.Subset(base_dataset, train_indices.indices),
+            torch.utils.data.Subset(base_dataset, train_indices),
             transform=train_transform
         )
         val_dataset = TransformWrapper(
-            torch.utils.data.Subset(base_dataset, val_indices.indices),
+            torch.utils.data.Subset(base_dataset, val_indices),
             transform=val_transform
         )
         # 테스트 데이터셋 추가 (검증과 동일한 transform 사용)
         test_dataset = TransformWrapper(
-            torch.utils.data.Subset(base_dataset, test_indices.indices),
+            torch.utils.data.Subset(base_dataset, test_indices),
             transform=val_transform  # 검증과 동일하게 증강 없음
         )
         
@@ -443,7 +509,8 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
             num_workers=num_workers,
             pin_memory=torch.cuda.is_available(),
             persistent_workers=num_workers > 0,
-            prefetch_factor=prefetch_factor if num_workers > 0 else None
+            prefetch_factor=prefetch_factor if num_workers > 0 else None,
+            collate_fn=custom_collate_fn
         )
         val_loader = DataLoader(
             val_dataset, 
@@ -452,7 +519,8 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
             num_workers=num_workers,
             pin_memory=torch.cuda.is_available(),
             persistent_workers=num_workers > 0,
-            prefetch_factor=prefetch_factor if num_workers > 0 else None
+            prefetch_factor=prefetch_factor if num_workers > 0 else None,
+            collate_fn=custom_collate_fn
         )
         # 테스트 DataLoader 추가
         test_loader = DataLoader(
@@ -462,7 +530,8 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
             num_workers=num_workers,
             pin_memory=torch.cuda.is_available(),
             persistent_workers=num_workers > 0,
-            prefetch_factor=prefetch_factor if num_workers > 0 else None
+            prefetch_factor=prefetch_factor if num_workers > 0 else None,
+            collate_fn=custom_collate_fn
         )
         
         print(f"\n[데이터 분할]")

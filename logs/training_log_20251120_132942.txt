@@ -1,0 +1,1344 @@
+[로그 저장] 로그 파일: logs\training_log_20251120_132942.txt
+================================================================================
+학습 시작 시간: 2025-11-20 13:29:42
+================================================================================
+
+[Device] cuda
+
+[결함 유형 분석]
+  - 데이터 디렉토리: data/labeled_layers
+  - 최소 샘플 수: 10
+  - 디렉토리 수: 47개
+
+[발견된 결함 유형] (최소 10개 이상)
+  - Super Elevation: 4819개
+  - Recoater Streaking: 3746개
+  - Fail: 1141개
+  - Laser capture timing error: 1089개
+  - Reocater Streaking: 615개
+  - Recoater capture timing error: 309개
+
+[클래스 매핑] 총 7개 클래스
+  - 클래스 0: Normal
+  - 클래스 1: Super Elevation
+  - 클래스 2: Recoater Streaking
+  - 클래스 3: Fail
+  - 클래스 4: Laser capture timing error
+  - 클래스 5: Reocater Streaking
+  - 클래스 6: Recoater capture timing error
+
+[데이터 로딩] 디렉토리 검색 중: data/labeled_layers
+[데이터 로딩] 발견된 데이터베이스 디렉토리: 47개
+  - 20210909_2131_D160: 30개 이미지 발견
+  - 20210913_2011_D160: 6개 이미지 발견
+  - 20210914_1755_D160: 5개 이미지 발견
+  - 20210914_1910_D120: 43개 이미지 발견
+  - 20210923_1350_D160: 6개 이미지 발견
+  - 20210924_2038_D160: 6개 이미지 발견
+  - 20211228_1943_D160: 7개 이미지 발견
+  - 20211230_1601_D160: 721개 이미지 발견
+[데이터 로딩] 처리 중: 10/47 디렉토리...
+  - 20220106_1756_D160: 30개 이미지 발견
+  - 20220110_2030_D120: 55개 이미지 발견
+  - 20220111_2155_D120: 255개 이미지 발견
+  - 20220112_1121_D120: 784개 이미지 발견
+  - 20220119_1146_D120: 235개 이미지 발견
+  - 20220327_2148_D160: 2개 이미지 발견
+  - 20220412_2029_D160: 154개 이미지 발견
+  - 20220413_1143_D160: 857개 이미지 발견
+  - 20220422_1649_D160: 14개 이미지 발견
+  - 20220428_2028_D160: 25개 이미지 발견
+[데이터 로딩] 처리 중: 20/47 디렉토리...
+  - 20220503_1734_M160: 985개 이미지 발견
+  - 20220504_1932_M160: 624개 이미지 발견
+  - 20220511_1843_M160: 91개 이미지 발견
+  - 20220516_1714_M160: 61개 이미지 발견
+  - 20220519_1821_M160: 4개 이미지 발견
+  - 20220523_2052_M160: 184개 이미지 발견
+  - 20220524_1614_M160: 53개 이미지 발견
+  - 20220524_2012_M160: 60개 이미지 발견
+  - 20220525_1723_M160: 8개 이미지 발견
+  - 20220530_1616_M160: 1232개 이미지 발견
+[데이터 로딩] 처리 중: 30/47 디렉토리...
+  - 20220531_2227_M160: 37개 이미지 발견
+  - 20220601_1356_M160: 7개 이미지 발견
+  - 20220601_1719_M160: 9개 이미지 발견
+  - 20220605_1508_M160: 44개 이미지 발견
+  - 20220605_1810_M160: 13개 이미지 발견
+  - 20220606_0211_M160: 595개 이미지 발견
+  - 20220616_2103_M160: 70개 이미지 발견
+  - 20220622_1617_M160: 395개 이미지 발견
+  - 20220623_2229_M160: 31개 이미지 발견
+  - 20220628_1112_M160: 268개 이미지 발견
+[데이터 로딩] 처리 중: 40/47 디렉토리...
+  - 20220629_1632_M160: 64개 이미지 발견
+  - 20220629_2104_M160: 183개 이미지 발견
+  - 20220630_1035_M160: 30개 이미지 발견
+  - 20220704_1812_M160: 425개 이미지 발견
+  - 20220712_1916_M160: 340개 이미지 발견
+  - 20220713_2322_M160: 11개 이미지 발견
+  - 20220714_2256_M160: 391개 이미지 발견
+  - 20220716_1706_M160: 215개 이미지 발견
+[데이터 로딩] 완료! 총 9665개 이미지 로드됨
+
+[데이터 분할] 랜덤 셔플 후 분할
+  - 학습: 6765개 (70%)
+  - 검증: 1449개 (15%)
+  - 테스트: 1451개 (15%)
+
+[레이블 분포 확인]
+  학습: 단일 레이블 5377개 (79.5%), 다중 레이블 1388개 (20.5%)
+  검증: 단일 레이블 1158개 (79.9%), 다중 레이블 291개 (20.1%)
+  테스트: 단일 레이블 1101개 (75.9%), 다중 레이블 350개 (24.1%)
+
+[데이터 분할]
+  - 학습: 6765개 (70%)
+  - 검증: 1449개 (15%)
+  - 테스트: 1451개 (15%)
+[모델 설정] 다중 레이블 분류 모드 (BCEWithLogitsLoss 사용)
+[참고] Label Smoothing은 다중 레이블에서 자동으로 적용되지 않습니다.
+[최적화] CosineAnnealingLR 스케줄러 사용 (T_max=300, eta_min=1e-6)
+[하이퍼파라미터]
+  - 모델: resnet34 (Pretrained)
+  - 학습률: 0.0001
+  - Weight Decay: 0.0001
+  - 이미지 크기: 224x224
+  - 데이터 증강: 활성화 (강화됨)
+  - Label Smoothing: 0.1
+[최적화] Mixed Precision Training (AMP) 활성화
+[최적화] CUDA 스트림 활성화, num_workers=8, prefetch_factor=8
+
+[학습 시작]
+  - 에포크: 300
+  - 배치 크기: 32
+  - 조기 종료 기준: 검증 정확도 98.0% 도달
+
+[Epoch 1/300]
+  Train Loss: 0.2116, Train Acc: 60.41% (다중 레이블 정확도)
+  Val Loss: 0.1003, Val Acc: 81.71% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 81.71%)
+
+[Epoch 2/300]
+  Train Loss: 0.1181, Train Acc: 78.80% (다중 레이블 정확도)
+  Val Loss: 0.0751, Val Acc: 87.65% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 87.65%)
+
+[Epoch 3/300]
+  Train Loss: 0.0973, Train Acc: 82.20% (다중 레이블 정확도)
+  Val Loss: 0.0784, Val Acc: 86.20% (다중 레이블 정확도)
+
+[Epoch 4/300]
+  Train Loss: 0.0934, Train Acc: 82.94% (다중 레이블 정확도)
+  Val Loss: 0.0599, Val Acc: 87.03% (다중 레이블 정확도)
+
+[Epoch 5/300]
+  Train Loss: 0.0862, Train Acc: 84.43% (다중 레이블 정확도)
+  Val Loss: 0.0608, Val Acc: 87.78% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 87.78%)
+
+[Epoch 6/300]
+  Train Loss: 0.0850, Train Acc: 84.52% (다중 레이블 정확도)
+  Val Loss: 0.0639, Val Acc: 87.99% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 87.99%)
+
+[Epoch 7/300]
+  Train Loss: 0.0817, Train Acc: 84.64% (다중 레이블 정확도)
+  Val Loss: 0.0618, Val Acc: 87.85% (다중 레이블 정확도)
+
+[Epoch 8/300]
+  Train Loss: 0.0770, Train Acc: 85.53% (다중 레이블 정확도)
+  Val Loss: 0.0646, Val Acc: 88.41% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 88.41%)
+
+[Epoch 9/300]
+  Train Loss: 0.0778, Train Acc: 85.38% (다중 레이블 정확도)
+  Val Loss: 0.0649, Val Acc: 87.65% (다중 레이블 정확도)
+
+[Epoch 10/300]
+  Train Loss: 0.0752, Train Acc: 86.46% (다중 레이블 정확도)
+  Val Loss: 0.0546, Val Acc: 89.92% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 89.92%)
+
+[Epoch 11/300]
+  Train Loss: 0.0742, Train Acc: 86.33% (다중 레이블 정확도)
+  Val Loss: 0.0591, Val Acc: 88.54% (다중 레이블 정확도)
+
+[Epoch 12/300]
+  Train Loss: 0.0726, Train Acc: 86.27% (다중 레이블 정확도)
+  Val Loss: 0.0638, Val Acc: 89.37% (다중 레이블 정확도)
+
+[Epoch 13/300]
+  Train Loss: 0.0717, Train Acc: 86.50% (다중 레이블 정확도)
+  Val Loss: 0.0581, Val Acc: 89.51% (다중 레이블 정확도)
+
+[Epoch 14/300]
+  Train Loss: 0.0727, Train Acc: 86.39% (다중 레이블 정확도)
+  Val Loss: 0.0586, Val Acc: 89.16% (다중 레이블 정확도)
+
+[Epoch 15/300]
+  Train Loss: 0.0722, Train Acc: 86.43% (다중 레이블 정확도)
+  Val Loss: 0.0572, Val Acc: 87.37% (다중 레이블 정확도)
+
+[Epoch 16/300]
+  Train Loss: 0.0690, Train Acc: 86.61% (다중 레이블 정확도)
+  Val Loss: 0.0554, Val Acc: 89.58% (다중 레이블 정확도)
+
+[Epoch 17/300]
+  Train Loss: 0.0718, Train Acc: 86.62% (다중 레이블 정확도)
+  Val Loss: 0.0611, Val Acc: 88.41% (다중 레이블 정확도)
+
+[Epoch 18/300]
+  Train Loss: 0.0681, Train Acc: 86.81% (다중 레이블 정확도)
+  Val Loss: 0.0698, Val Acc: 87.37% (다중 레이블 정확도)
+
+[Epoch 19/300]
+  Train Loss: 0.0677, Train Acc: 87.11% (다중 레이블 정확도)
+  Val Loss: 0.0533, Val Acc: 90.75% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 90.75%)
+
+[Epoch 20/300]
+  Train Loss: 0.0672, Train Acc: 87.24% (다중 레이블 정확도)
+  Val Loss: 0.0512, Val Acc: 91.65% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 91.65%)
+
+[Epoch 21/300]
+  Train Loss: 0.0659, Train Acc: 87.73% (다중 레이블 정확도)
+  Val Loss: 0.0555, Val Acc: 91.03% (다중 레이블 정확도)
+
+[Epoch 22/300]
+  Train Loss: 0.0684, Train Acc: 86.99% (다중 레이블 정확도)
+  Val Loss: 0.0519, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 23/300]
+  Train Loss: 0.0651, Train Acc: 87.60% (다중 레이블 정확도)
+  Val Loss: 0.0553, Val Acc: 89.51% (다중 레이블 정확도)
+
+[Epoch 24/300]
+  Train Loss: 0.0681, Train Acc: 86.84% (다중 레이블 정확도)
+  Val Loss: 0.0585, Val Acc: 89.79% (다중 레이블 정확도)
+
+[Epoch 25/300]
+  Train Loss: 0.0679, Train Acc: 87.07% (다중 레이블 정확도)
+  Val Loss: 0.0705, Val Acc: 85.02% (다중 레이블 정확도)
+
+[Epoch 26/300]
+  Train Loss: 0.0657, Train Acc: 87.08% (다중 레이블 정확도)
+  Val Loss: 0.0540, Val Acc: 90.06% (다중 레이블 정확도)
+
+[Epoch 27/300]
+  Train Loss: 0.0635, Train Acc: 87.86% (다중 레이블 정확도)
+  Val Loss: 0.0540, Val Acc: 90.68% (다중 레이블 정확도)
+
+[Epoch 28/300]
+  Train Loss: 0.0660, Train Acc: 87.55% (다중 레이블 정확도)
+  Val Loss: 0.0512, Val Acc: 90.55% (다중 레이블 정확도)
+
+[Epoch 29/300]
+  Train Loss: 0.0686, Train Acc: 87.23% (다중 레이블 정확도)
+  Val Loss: 0.0555, Val Acc: 90.55% (다중 레이블 정확도)
+
+[Epoch 30/300]
+  Train Loss: 0.0674, Train Acc: 87.55% (다중 레이블 정확도)
+  Val Loss: 0.0556, Val Acc: 90.82% (다중 레이블 정확도)
+
+[Epoch 31/300]
+  Train Loss: 0.0644, Train Acc: 87.70% (다중 레이블 정확도)
+  Val Loss: 0.0481, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 32/300]
+  Train Loss: 0.0632, Train Acc: 87.72% (다중 레이블 정확도)
+  Val Loss: 0.0635, Val Acc: 87.92% (다중 레이블 정확도)
+
+[Epoch 33/300]
+  Train Loss: 0.0618, Train Acc: 88.10% (다중 레이블 정확도)
+  Val Loss: 0.0520, Val Acc: 89.51% (다중 레이블 정확도)
+
+[Epoch 34/300]
+  Train Loss: 0.0635, Train Acc: 88.06% (다중 레이블 정확도)
+  Val Loss: 0.0520, Val Acc: 90.55% (다중 레이블 정확도)
+
+[Epoch 35/300]
+  Train Loss: 0.0616, Train Acc: 88.19% (다중 레이블 정확도)
+  Val Loss: 0.0533, Val Acc: 91.93% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 91.93%)
+
+[Epoch 36/300]
+  Train Loss: 0.0626, Train Acc: 88.00% (다중 레이블 정확도)
+  Val Loss: 0.0502, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 37/300]
+  Train Loss: 0.0627, Train Acc: 87.97% (다중 레이블 정확도)
+  Val Loss: 0.0504, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 38/300]
+  Train Loss: 0.0595, Train Acc: 88.68% (다중 레이블 정확도)
+  Val Loss: 0.0517, Val Acc: 90.20% (다중 레이블 정확도)
+
+[Epoch 39/300]
+  Train Loss: 0.0604, Train Acc: 88.14% (다중 레이블 정확도)
+  Val Loss: 0.0570, Val Acc: 90.48% (다중 레이블 정확도)
+
+[Epoch 40/300]
+  Train Loss: 0.0628, Train Acc: 87.95% (다중 레이블 정확도)
+  Val Loss: 0.0599, Val Acc: 91.03% (다중 레이블 정확도)
+
+[Epoch 41/300]
+  Train Loss: 0.0639, Train Acc: 87.88% (다중 레이블 정확도)
+  Val Loss: 0.0515, Val Acc: 90.96% (다중 레이블 정확도)
+
+[Epoch 42/300]
+  Train Loss: 0.0615, Train Acc: 88.25% (다중 레이블 정확도)
+  Val Loss: 0.0494, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 43/300]
+  Train Loss: 0.0622, Train Acc: 88.14% (다중 레이블 정확도)
+  Val Loss: 0.0493, Val Acc: 90.82% (다중 레이블 정확도)
+
+[Epoch 44/300]
+  Train Loss: 0.0583, Train Acc: 88.75% (다중 레이블 정확도)
+  Val Loss: 0.0503, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 45/300]
+  Train Loss: 0.0606, Train Acc: 88.03% (다중 레이블 정확도)
+  Val Loss: 0.0587, Val Acc: 86.82% (다중 레이블 정확도)
+
+[Epoch 46/300]
+  Train Loss: 0.0599, Train Acc: 88.72% (다중 레이블 정확도)
+  Val Loss: 0.0507, Val Acc: 90.96% (다중 레이블 정확도)
+
+[Epoch 47/300]
+  Train Loss: 0.0593, Train Acc: 88.63% (다중 레이블 정확도)
+  Val Loss: 0.0496, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 48/300]
+  Train Loss: 0.0598, Train Acc: 88.47% (다중 레이블 정확도)
+  Val Loss: 0.0511, Val Acc: 90.55% (다중 레이블 정확도)
+
+[Epoch 49/300]
+  Train Loss: 0.0589, Train Acc: 88.78% (다중 레이블 정확도)
+  Val Loss: 0.0497, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 50/300]
+  Train Loss: 0.0587, Train Acc: 88.93% (다중 레이블 정확도)
+  Val Loss: 0.0509, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 51/300]
+  Train Loss: 0.0611, Train Acc: 88.53% (다중 레이블 정확도)
+  Val Loss: 0.0523, Val Acc: 90.89% (다중 레이블 정확도)
+
+[Epoch 52/300]
+  Train Loss: 0.0640, Train Acc: 87.70% (다중 레이블 정확도)
+  Val Loss: 0.0516, Val Acc: 91.10% (다중 레이블 정확도)
+
+[Epoch 53/300]
+  Train Loss: 0.0598, Train Acc: 88.41% (다중 레이블 정확도)
+  Val Loss: 0.0479, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 54/300]
+  Train Loss: 0.0564, Train Acc: 89.27% (다중 레이블 정확도)
+  Val Loss: 0.0540, Val Acc: 90.89% (다중 레이블 정확도)
+
+[Epoch 55/300]
+  Train Loss: 0.0599, Train Acc: 88.50% (다중 레이블 정확도)
+  Val Loss: 0.0540, Val Acc: 90.13% (다중 레이블 정확도)
+
+[Epoch 56/300]
+  Train Loss: 0.0573, Train Acc: 88.85% (다중 레이블 정확도)
+  Val Loss: 0.0478, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 57/300]
+  Train Loss: 0.0561, Train Acc: 89.05% (다중 레이블 정확도)
+  Val Loss: 0.0506, Val Acc: 90.27% (다중 레이블 정확도)
+
+[Epoch 58/300]
+  Train Loss: 0.0572, Train Acc: 88.75% (다중 레이블 정확도)
+  Val Loss: 0.0502, Val Acc: 90.55% (다중 레이블 정확도)
+
+[Epoch 59/300]
+  Train Loss: 0.0580, Train Acc: 88.94% (다중 레이블 정확도)
+  Val Loss: 0.0555, Val Acc: 90.82% (다중 레이블 정확도)
+
+[Epoch 60/300]
+  Train Loss: 0.0577, Train Acc: 88.71% (다중 레이블 정확도)
+  Val Loss: 0.0515, Val Acc: 90.89% (다중 레이블 정확도)
+
+[Epoch 61/300]
+  Train Loss: 0.0554, Train Acc: 89.09% (다중 레이블 정확도)
+  Val Loss: 0.0593, Val Acc: 90.27% (다중 레이블 정확도)
+
+[Epoch 62/300]
+  Train Loss: 0.0558, Train Acc: 89.42% (다중 레이블 정확도)
+  Val Loss: 0.0527, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 63/300]
+  Train Loss: 0.0578, Train Acc: 89.25% (다중 레이블 정확도)
+  Val Loss: 0.0497, Val Acc: 90.68% (다중 레이블 정확도)
+
+[Epoch 64/300]
+  Train Loss: 0.0588, Train Acc: 88.84% (다중 레이블 정확도)
+  Val Loss: 0.0550, Val Acc: 90.20% (다중 레이블 정확도)
+
+[Epoch 65/300]
+  Train Loss: 0.0575, Train Acc: 89.09% (다중 레이블 정확도)
+  Val Loss: 0.0506, Val Acc: 90.89% (다중 레이블 정확도)
+
+[Epoch 66/300]
+  Train Loss: 0.0565, Train Acc: 89.16% (다중 레이블 정확도)
+  Val Loss: 0.0556, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 67/300]
+  Train Loss: 0.0566, Train Acc: 89.03% (다중 레이블 정확도)
+  Val Loss: 0.0645, Val Acc: 87.51% (다중 레이블 정확도)
+
+[Epoch 68/300]
+  Train Loss: 0.0560, Train Acc: 89.06% (다중 레이블 정확도)
+  Val Loss: 0.0504, Val Acc: 90.96% (다중 레이블 정확도)
+
+[Epoch 69/300]
+  Train Loss: 0.0584, Train Acc: 88.60% (다중 레이블 정확도)
+  Val Loss: 0.0503, Val Acc: 90.96% (다중 레이블 정확도)
+
+[Epoch 70/300]
+  Train Loss: 0.0560, Train Acc: 89.14% (다중 레이블 정확도)
+  Val Loss: 0.0495, Val Acc: 90.96% (다중 레이블 정확도)
+
+[Epoch 71/300]
+  Train Loss: 0.0560, Train Acc: 89.08% (다중 레이블 정확도)
+  Val Loss: 0.0475, Val Acc: 91.86% (다중 레이블 정확도)
+
+[Epoch 72/300]
+  Train Loss: 0.0530, Train Acc: 89.80% (다중 레이블 정확도)
+  Val Loss: 0.0531, Val Acc: 90.34% (다중 레이블 정확도)
+
+[Epoch 73/300]
+  Train Loss: 0.0559, Train Acc: 88.97% (다중 레이블 정확도)
+  Val Loss: 0.0506, Val Acc: 91.79% (다중 레이블 정확도)
+
+[Epoch 74/300]
+  Train Loss: 0.0547, Train Acc: 89.45% (다중 레이블 정확도)
+  Val Loss: 0.0468, Val Acc: 92.06% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.06%)
+
+[Epoch 75/300]
+  Train Loss: 0.0553, Train Acc: 89.45% (다중 레이블 정확도)
+  Val Loss: 0.0506, Val Acc: 90.55% (다중 레이블 정확도)
+
+[Epoch 76/300]
+  Train Loss: 0.0534, Train Acc: 89.52% (다중 레이블 정확도)
+  Val Loss: 0.0513, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 77/300]
+  Train Loss: 0.0565, Train Acc: 89.19% (다중 레이블 정확도)
+  Val Loss: 0.0482, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 78/300]
+  Train Loss: 0.0534, Train Acc: 89.67% (다중 레이블 정확도)
+  Val Loss: 0.0523, Val Acc: 90.82% (다중 레이블 정확도)
+
+[Epoch 79/300]
+  Train Loss: 0.0562, Train Acc: 89.19% (다중 레이블 정확도)
+  Val Loss: 0.0503, Val Acc: 90.61% (다중 레이블 정확도)
+
+[Epoch 80/300]
+  Train Loss: 0.0555, Train Acc: 89.03% (다중 레이블 정확도)
+  Val Loss: 0.0501, Val Acc: 90.27% (다중 레이블 정확도)
+
+[Epoch 81/300]
+  Train Loss: 0.0552, Train Acc: 89.31% (다중 레이블 정확도)
+  Val Loss: 0.0492, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 82/300]
+  Train Loss: 0.0548, Train Acc: 89.36% (다중 레이블 정확도)
+  Val Loss: 0.0510, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 83/300]
+  Train Loss: 0.0538, Train Acc: 89.37% (다중 레이블 정확도)
+  Val Loss: 0.0516, Val Acc: 90.82% (다중 레이블 정확도)
+
+[Epoch 84/300]
+  Train Loss: 0.0515, Train Acc: 90.04% (다중 레이블 정확도)
+  Val Loss: 0.0509, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 85/300]
+  Train Loss: 0.0537, Train Acc: 89.48% (다중 레이블 정확도)
+  Val Loss: 0.0558, Val Acc: 90.61% (다중 레이블 정확도)
+
+[Epoch 86/300]
+  Train Loss: 0.0533, Train Acc: 89.53% (다중 레이블 정확도)
+  Val Loss: 0.0489, Val Acc: 90.68% (다중 레이블 정확도)
+
+[Epoch 87/300]
+  Train Loss: 0.0524, Train Acc: 89.74% (다중 레이블 정확도)
+  Val Loss: 0.0491, Val Acc: 91.79% (다중 레이블 정확도)
+
+[Epoch 88/300]
+  Train Loss: 0.0517, Train Acc: 89.79% (다중 레이블 정확도)
+  Val Loss: 0.0464, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 89/300]
+  Train Loss: 0.0524, Train Acc: 89.76% (다중 레이블 정확도)
+  Val Loss: 0.0482, Val Acc: 90.75% (다중 레이블 정확도)
+
+[Epoch 90/300]
+  Train Loss: 0.0519, Train Acc: 89.64% (다중 레이블 정확도)
+  Val Loss: 0.0578, Val Acc: 88.20% (다중 레이블 정확도)
+
+[Epoch 91/300]
+  Train Loss: 0.0538, Train Acc: 89.46% (다중 레이블 정확도)
+  Val Loss: 0.0523, Val Acc: 89.86% (다중 레이블 정확도)
+
+[Epoch 92/300]
+  Train Loss: 0.0528, Train Acc: 89.45% (다중 레이블 정확도)
+  Val Loss: 0.0487, Val Acc: 91.86% (다중 레이블 정확도)
+
+[Epoch 93/300]
+  Train Loss: 0.0524, Train Acc: 90.01% (다중 레이블 정확도)
+  Val Loss: 0.0571, Val Acc: 90.41% (다중 레이블 정확도)
+
+[Epoch 94/300]
+  Train Loss: 0.0539, Train Acc: 89.77% (다중 레이블 정확도)
+  Val Loss: 0.0500, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 95/300]
+  Train Loss: 0.0516, Train Acc: 89.87% (다중 레이블 정확도)
+  Val Loss: 0.0509, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 96/300]
+  Train Loss: 0.0542, Train Acc: 89.37% (다중 레이블 정확도)
+  Val Loss: 0.0477, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 97/300]
+  Train Loss: 0.0535, Train Acc: 89.50% (다중 레이블 정확도)
+  Val Loss: 0.0519, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 98/300]
+  Train Loss: 0.0531, Train Acc: 89.79% (다중 레이블 정확도)
+  Val Loss: 0.0485, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 99/300]
+  Train Loss: 0.0537, Train Acc: 89.45% (다중 레이블 정확도)
+  Val Loss: 0.0511, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 100/300]
+  Train Loss: 0.0499, Train Acc: 90.14% (다중 레이블 정확도)
+  Val Loss: 0.0528, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 101/300]
+  Train Loss: 0.0505, Train Acc: 90.18% (다중 레이블 정확도)
+  Val Loss: 0.0476, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 102/300]
+  Train Loss: 0.0499, Train Acc: 90.27% (다중 레이블 정확도)
+  Val Loss: 0.0482, Val Acc: 91.79% (다중 레이블 정확도)
+
+[Epoch 103/300]
+  Train Loss: 0.0485, Train Acc: 90.38% (다중 레이블 정확도)
+  Val Loss: 0.0529, Val Acc: 90.48% (다중 레이블 정확도)
+
+[Epoch 104/300]
+  Train Loss: 0.0515, Train Acc: 90.08% (다중 레이블 정확도)
+  Val Loss: 0.0508, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 105/300]
+  Train Loss: 0.0519, Train Acc: 89.95% (다중 레이블 정확도)
+  Val Loss: 0.0504, Val Acc: 91.86% (다중 레이블 정확도)
+
+[Epoch 106/300]
+  Train Loss: 0.0523, Train Acc: 89.74% (다중 레이블 정확도)
+  Val Loss: 0.0482, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 107/300]
+  Train Loss: 0.0515, Train Acc: 90.08% (다중 레이블 정확도)
+  Val Loss: 0.0479, Val Acc: 91.10% (다중 레이블 정확도)
+
+[Epoch 108/300]
+  Train Loss: 0.0504, Train Acc: 89.98% (다중 레이블 정확도)
+  Val Loss: 0.0484, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 109/300]
+  Train Loss: 0.0514, Train Acc: 89.86% (다중 레이블 정확도)
+  Val Loss: 0.0489, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 110/300]
+  Train Loss: 0.0506, Train Acc: 89.92% (다중 레이블 정확도)
+  Val Loss: 0.0503, Val Acc: 91.93% (다중 레이블 정확도)
+
+[Epoch 111/300]
+  Train Loss: 0.0525, Train Acc: 89.73% (다중 레이블 정확도)
+  Val Loss: 0.0495, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 112/300]
+  Train Loss: 0.0497, Train Acc: 90.52% (다중 레이블 정확도)
+  Val Loss: 0.0477, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 113/300]
+  Train Loss: 0.0492, Train Acc: 90.23% (다중 레이블 정확도)
+  Val Loss: 0.0472, Val Acc: 92.41% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.41%)
+
+[Epoch 114/300]
+  Train Loss: 0.0499, Train Acc: 90.38% (다중 레이블 정확도)
+  Val Loss: 0.0493, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 115/300]
+  Train Loss: 0.0509, Train Acc: 90.01% (다중 레이블 정확도)
+  Val Loss: 0.0543, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 116/300]
+  Train Loss: 0.0505, Train Acc: 90.29% (다중 레이블 정확도)
+  Val Loss: 0.0516, Val Acc: 90.55% (다중 레이블 정확도)
+
+[Epoch 117/300]
+  Train Loss: 0.0489, Train Acc: 90.21% (다중 레이블 정확도)
+  Val Loss: 0.0505, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 118/300]
+  Train Loss: 0.0487, Train Acc: 90.11% (다중 레이블 정확도)
+  Val Loss: 0.0497, Val Acc: 91.79% (다중 레이블 정확도)
+
+[Epoch 119/300]
+  Train Loss: 0.0500, Train Acc: 90.42% (다중 레이블 정확도)
+  Val Loss: 0.0507, Val Acc: 91.86% (다중 레이블 정확도)
+
+[Epoch 120/300]
+  Train Loss: 0.0497, Train Acc: 90.32% (다중 레이블 정확도)
+  Val Loss: 0.0492, Val Acc: 91.72% (다중 레이블 정확도)
+
+[Epoch 121/300]
+  Train Loss: 0.0496, Train Acc: 90.39% (다중 레이블 정확도)
+  Val Loss: 0.0521, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 122/300]
+  Train Loss: 0.0494, Train Acc: 90.35% (다중 레이블 정확도)
+  Val Loss: 0.0480, Val Acc: 91.10% (다중 레이블 정확도)
+
+[Epoch 123/300]
+  Train Loss: 0.0497, Train Acc: 90.35% (다중 레이블 정확도)
+  Val Loss: 0.0457, Val Acc: 92.48% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.48%)
+
+[Epoch 124/300]
+  Train Loss: 0.0495, Train Acc: 90.08% (다중 레이블 정확도)
+  Val Loss: 0.0477, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 125/300]
+  Train Loss: 0.0494, Train Acc: 90.29% (다중 레이블 정확도)
+  Val Loss: 0.0527, Val Acc: 90.75% (다중 레이블 정확도)
+
+[Epoch 126/300]
+  Train Loss: 0.0495, Train Acc: 90.33% (다중 레이블 정확도)
+  Val Loss: 0.0496, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 127/300]
+  Train Loss: 0.0485, Train Acc: 90.27% (다중 레이블 정확도)
+  Val Loss: 0.0519, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 128/300]
+  Train Loss: 0.0479, Train Acc: 90.60% (다중 레이블 정확도)
+  Val Loss: 0.0480, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 129/300]
+  Train Loss: 0.0497, Train Acc: 90.38% (다중 레이블 정확도)
+  Val Loss: 0.0501, Val Acc: 92.06% (다중 레이블 정확도)
+
+[Epoch 130/300]
+  Train Loss: 0.0493, Train Acc: 90.23% (다중 레이블 정확도)
+  Val Loss: 0.0497, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 131/300]
+  Train Loss: 0.0496, Train Acc: 90.20% (다중 레이블 정확도)
+  Val Loss: 0.0517, Val Acc: 90.89% (다중 레이블 정확도)
+
+[Epoch 132/300]
+  Train Loss: 0.0483, Train Acc: 90.52% (다중 레이블 정확도)
+  Val Loss: 0.0476, Val Acc: 92.13% (다중 레이블 정확도)
+
+[Epoch 133/300]
+  Train Loss: 0.0490, Train Acc: 90.63% (다중 레이블 정확도)
+  Val Loss: 0.0518, Val Acc: 91.79% (다중 레이블 정확도)
+
+[Epoch 134/300]
+  Train Loss: 0.0490, Train Acc: 90.48% (다중 레이블 정확도)
+  Val Loss: 0.0465, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 135/300]
+  Train Loss: 0.0496, Train Acc: 90.36% (다중 레이블 정확도)
+  Val Loss: 0.0487, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 136/300]
+  Train Loss: 0.0468, Train Acc: 90.85% (다중 레이블 정확도)
+  Val Loss: 0.0508, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 137/300]
+  Train Loss: 0.0465, Train Acc: 90.84% (다중 레이블 정확도)
+  Val Loss: 0.0506, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 138/300]
+  Train Loss: 0.0480, Train Acc: 90.42% (다중 레이블 정확도)
+  Val Loss: 0.0508, Val Acc: 91.79% (다중 레이블 정확도)
+
+[Epoch 139/300]
+  Train Loss: 0.0474, Train Acc: 90.57% (다중 레이블 정확도)
+  Val Loss: 0.0498, Val Acc: 92.06% (다중 레이블 정확도)
+
+[Epoch 140/300]
+  Train Loss: 0.0475, Train Acc: 90.57% (다중 레이블 정확도)
+  Val Loss: 0.0499, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 141/300]
+  Train Loss: 0.0466, Train Acc: 90.81% (다중 레이블 정확도)
+  Val Loss: 0.0496, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 142/300]
+  Train Loss: 0.0464, Train Acc: 90.81% (다중 레이블 정확도)
+  Val Loss: 0.0491, Val Acc: 92.13% (다중 레이블 정확도)
+
+[Epoch 143/300]
+  Train Loss: 0.0472, Train Acc: 90.64% (다중 레이블 정확도)
+  Val Loss: 0.0507, Val Acc: 92.06% (다중 레이블 정확도)
+
+[Epoch 144/300]
+  Train Loss: 0.0470, Train Acc: 90.60% (다중 레이블 정확도)
+  Val Loss: 0.0494, Val Acc: 92.13% (다중 레이블 정확도)
+
+[Epoch 145/300]
+  Train Loss: 0.0462, Train Acc: 90.84% (다중 레이블 정확도)
+  Val Loss: 0.0489, Val Acc: 91.93% (다중 레이블 정확도)
+
+[Epoch 146/300]
+  Train Loss: 0.0486, Train Acc: 90.67% (다중 레이블 정확도)
+  Val Loss: 0.0485, Val Acc: 92.13% (다중 레이블 정확도)
+
+[Epoch 147/300]
+  Train Loss: 0.0468, Train Acc: 90.67% (다중 레이블 정확도)
+  Val Loss: 0.0510, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 148/300]
+  Train Loss: 0.0484, Train Acc: 90.16% (다중 레이블 정확도)
+  Val Loss: 0.0481, Val Acc: 92.27% (다중 레이블 정확도)
+
+[Epoch 149/300]
+  Train Loss: 0.0480, Train Acc: 90.36% (다중 레이블 정확도)
+  Val Loss: 0.0508, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 150/300]
+  Train Loss: 0.0465, Train Acc: 90.94% (다중 레이블 정확도)
+  Val Loss: 0.0528, Val Acc: 92.41% (다중 레이블 정확도)
+
+[Epoch 151/300]
+  Train Loss: 0.0451, Train Acc: 91.16% (다중 레이블 정확도)
+  Val Loss: 0.0522, Val Acc: 92.13% (다중 레이블 정확도)
+
+[Epoch 152/300]
+  Train Loss: 0.0481, Train Acc: 90.57% (다중 레이블 정확도)
+  Val Loss: 0.0518, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 153/300]
+  Train Loss: 0.0480, Train Acc: 90.42% (다중 레이블 정확도)
+  Val Loss: 0.0479, Val Acc: 91.86% (다중 레이블 정확도)
+
+[Epoch 154/300]
+  Train Loss: 0.0461, Train Acc: 91.01% (다중 레이블 정확도)
+  Val Loss: 0.0512, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 155/300]
+  Train Loss: 0.0460, Train Acc: 91.06% (다중 레이블 정확도)
+  Val Loss: 0.0476, Val Acc: 92.06% (다중 레이블 정확도)
+
+[Epoch 156/300]
+  Train Loss: 0.0461, Train Acc: 90.61% (다중 레이블 정확도)
+  Val Loss: 0.0486, Val Acc: 91.72% (다중 레이블 정확도)
+
+[Epoch 157/300]
+  Train Loss: 0.0448, Train Acc: 91.18% (다중 레이블 정확도)
+  Val Loss: 0.0491, Val Acc: 91.86% (다중 레이블 정확도)
+
+[Epoch 158/300]
+  Train Loss: 0.0450, Train Acc: 91.03% (다중 레이블 정확도)
+  Val Loss: 0.0506, Val Acc: 92.06% (다중 레이블 정확도)
+
+[Epoch 159/300]
+  Train Loss: 0.0458, Train Acc: 91.13% (다중 레이블 정확도)
+  Val Loss: 0.0516, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 160/300]
+  Train Loss: 0.0446, Train Acc: 91.13% (다중 레이블 정확도)
+  Val Loss: 0.0489, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 161/300]
+  Train Loss: 0.0453, Train Acc: 90.97% (다중 레이블 정확도)
+  Val Loss: 0.0529, Val Acc: 90.68% (다중 레이블 정확도)
+
+[Epoch 162/300]
+  Train Loss: 0.0441, Train Acc: 91.20% (다중 레이블 정확도)
+  Val Loss: 0.0524, Val Acc: 92.13% (다중 레이블 정확도)
+
+[Epoch 163/300]
+  Train Loss: 0.0449, Train Acc: 91.18% (다중 레이블 정확도)
+  Val Loss: 0.0504, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 164/300]
+  Train Loss: 0.0451, Train Acc: 91.41% (다중 레이블 정확도)
+  Val Loss: 0.0532, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 165/300]
+  Train Loss: 0.0430, Train Acc: 91.46% (다중 레이블 정확도)
+  Val Loss: 0.0518, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 166/300]
+  Train Loss: 0.0448, Train Acc: 91.23% (다중 레이블 정확도)
+  Val Loss: 0.0480, Val Acc: 92.27% (다중 레이블 정확도)
+
+[Epoch 167/300]
+  Train Loss: 0.0430, Train Acc: 91.31% (다중 레이블 정확도)
+  Val Loss: 0.0510, Val Acc: 91.93% (다중 레이블 정확도)
+
+[Epoch 168/300]
+  Train Loss: 0.0444, Train Acc: 91.37% (다중 레이블 정확도)
+  Val Loss: 0.0506, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 169/300]
+  Train Loss: 0.0443, Train Acc: 91.35% (다중 레이블 정확도)
+  Val Loss: 0.0522, Val Acc: 92.06% (다중 레이블 정확도)
+
+[Epoch 170/300]
+  Train Loss: 0.0445, Train Acc: 90.88% (다중 레이블 정확도)
+  Val Loss: 0.0491, Val Acc: 91.72% (다중 레이블 정확도)
+
+[Epoch 171/300]
+  Train Loss: 0.0438, Train Acc: 91.03% (다중 레이블 정확도)
+  Val Loss: 0.0506, Val Acc: 91.79% (다중 레이블 정확도)
+
+[Epoch 172/300]
+  Train Loss: 0.0428, Train Acc: 91.63% (다중 레이블 정확도)
+  Val Loss: 0.0546, Val Acc: 91.86% (다중 레이블 정확도)
+
+[Epoch 173/300]
+  Train Loss: 0.0445, Train Acc: 91.19% (다중 레이블 정확도)
+  Val Loss: 0.0492, Val Acc: 92.41% (다중 레이블 정확도)
+
+[Epoch 174/300]
+  Train Loss: 0.0437, Train Acc: 91.43% (다중 레이블 정확도)
+  Val Loss: 0.0516, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 175/300]
+  Train Loss: 0.0432, Train Acc: 91.13% (다중 레이블 정확도)
+  Val Loss: 0.0511, Val Acc: 92.75% (다중 레이블 정확도)
+  -> 최고 모델 저장: checkpoints\defect_type_classifier_best.pth (Val Acc: 92.75%)
+
+[Epoch 176/300]
+  Train Loss: 0.0433, Train Acc: 91.49% (다중 레이블 정확도)
+  Val Loss: 0.0493, Val Acc: 92.06% (다중 레이블 정확도)
+
+[Epoch 177/300]
+  Train Loss: 0.0426, Train Acc: 91.62% (다중 레이블 정확도)
+  Val Loss: 0.0502, Val Acc: 92.20% (다중 레이블 정확도)
+
+[Epoch 178/300]
+  Train Loss: 0.0437, Train Acc: 91.22% (다중 레이블 정확도)
+  Val Loss: 0.0524, Val Acc: 91.86% (다중 레이블 정확도)
+
+[Epoch 179/300]
+  Train Loss: 0.0441, Train Acc: 91.20% (다중 레이블 정확도)
+  Val Loss: 0.0519, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 180/300]
+  Train Loss: 0.0410, Train Acc: 91.49% (다중 레이블 정확도)
+  Val Loss: 0.0551, Val Acc: 92.27% (다중 레이블 정확도)
+
+[Epoch 181/300]
+  Train Loss: 0.0434, Train Acc: 91.22% (다중 레이블 정확도)
+  Val Loss: 0.0549, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 182/300]
+  Train Loss: 0.0425, Train Acc: 91.43% (다중 레이블 정확도)
+  Val Loss: 0.0524, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 183/300]
+  Train Loss: 0.0419, Train Acc: 91.60% (다중 레이블 정확도)
+  Val Loss: 0.0518, Val Acc: 91.72% (다중 레이블 정확도)
+
+[Epoch 184/300]
+  Train Loss: 0.0414, Train Acc: 91.78% (다중 레이블 정확도)
+  Val Loss: 0.0516, Val Acc: 91.93% (다중 레이블 정확도)
+
+[Epoch 185/300]
+  Train Loss: 0.0442, Train Acc: 91.25% (다중 레이블 정확도)
+  Val Loss: 0.0526, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 186/300]
+  Train Loss: 0.0419, Train Acc: 91.66% (다중 레이블 정확도)
+  Val Loss: 0.0526, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 187/300]
+  Train Loss: 0.0417, Train Acc: 91.81% (다중 레이블 정확도)
+  Val Loss: 0.0524, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 188/300]
+  Train Loss: 0.0413, Train Acc: 91.54% (다중 레이블 정확도)
+  Val Loss: 0.0534, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 189/300]
+  Train Loss: 0.0415, Train Acc: 91.69% (다중 레이블 정확도)
+  Val Loss: 0.0545, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 190/300]
+  Train Loss: 0.0412, Train Acc: 91.56% (다중 레이블 정확도)
+  Val Loss: 0.0534, Val Acc: 91.10% (다중 레이블 정확도)
+
+[Epoch 191/300]
+  Train Loss: 0.0413, Train Acc: 91.69% (다중 레이블 정확도)
+  Val Loss: 0.0541, Val Acc: 91.79% (다중 레이블 정확도)
+
+[Epoch 192/300]
+  Train Loss: 0.0425, Train Acc: 91.49% (다중 레이블 정확도)
+  Val Loss: 0.0523, Val Acc: 91.72% (다중 레이블 정확도)
+
+[Epoch 193/300]
+  Train Loss: 0.0418, Train Acc: 91.57% (다중 레이블 정확도)
+  Val Loss: 0.0513, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 194/300]
+  Train Loss: 0.0404, Train Acc: 91.65% (다중 레이블 정확도)
+  Val Loss: 0.0525, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 195/300]
+  Train Loss: 0.0407, Train Acc: 91.81% (다중 레이블 정확도)
+  Val Loss: 0.0540, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 196/300]
+  Train Loss: 0.0405, Train Acc: 91.72% (다중 레이블 정확도)
+  Val Loss: 0.0542, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 197/300]
+  Train Loss: 0.0416, Train Acc: 91.57% (다중 레이블 정확도)
+  Val Loss: 0.0514, Val Acc: 91.93% (다중 레이블 정확도)
+
+[Epoch 198/300]
+  Train Loss: 0.0405, Train Acc: 91.80% (다중 레이블 정확도)
+  Val Loss: 0.0507, Val Acc: 92.34% (다중 레이블 정확도)
+
+[Epoch 199/300]
+  Train Loss: 0.0406, Train Acc: 91.87% (다중 레이블 정확도)
+  Val Loss: 0.0513, Val Acc: 92.27% (다중 레이블 정확도)
+
+[Epoch 200/300]
+  Train Loss: 0.0411, Train Acc: 91.57% (다중 레이블 정확도)
+  Val Loss: 0.0503, Val Acc: 92.75% (다중 레이블 정확도)
+
+[Epoch 201/300]
+  Train Loss: 0.0406, Train Acc: 91.96% (다중 레이블 정확도)
+  Val Loss: 0.0481, Val Acc: 91.93% (다중 레이블 정확도)
+
+[Epoch 202/300]
+  Train Loss: 0.0398, Train Acc: 91.69% (다중 레이블 정확도)
+  Val Loss: 0.0499, Val Acc: 91.72% (다중 레이블 정확도)
+
+[Epoch 203/300]
+  Train Loss: 0.0394, Train Acc: 91.97% (다중 레이블 정확도)
+  Val Loss: 0.0519, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 204/300]
+  Train Loss: 0.0403, Train Acc: 92.06% (다중 레이블 정확도)
+  Val Loss: 0.0533, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 205/300]
+  Train Loss: 0.0403, Train Acc: 91.93% (다중 레이블 정확도)
+  Val Loss: 0.0533, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 206/300]
+  Train Loss: 0.0405, Train Acc: 91.87% (다중 레이블 정확도)
+  Val Loss: 0.0525, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 207/300]
+  Train Loss: 0.0403, Train Acc: 92.11% (다중 레이블 정확도)
+  Val Loss: 0.0544, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 208/300]
+  Train Loss: 0.0398, Train Acc: 91.84% (다중 레이블 정확도)
+  Val Loss: 0.0537, Val Acc: 92.27% (다중 레이블 정확도)
+
+[Epoch 209/300]
+  Train Loss: 0.0396, Train Acc: 92.12% (다중 레이블 정확도)
+  Val Loss: 0.0534, Val Acc: 91.93% (다중 레이블 정확도)
+
+[Epoch 210/300]
+  Train Loss: 0.0389, Train Acc: 92.12% (다중 레이블 정확도)
+  Val Loss: 0.0512, Val Acc: 91.79% (다중 레이블 정확도)
+
+[Epoch 211/300]
+  Train Loss: 0.0393, Train Acc: 92.20% (다중 레이블 정확도)
+  Val Loss: 0.0517, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 212/300]
+  Train Loss: 0.0387, Train Acc: 92.05% (다중 레이블 정확도)
+  Val Loss: 0.0533, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 213/300]
+  Train Loss: 0.0401, Train Acc: 91.83% (다중 레이블 정확도)
+  Val Loss: 0.0529, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 214/300]
+  Train Loss: 0.0383, Train Acc: 92.14% (다중 레이블 정확도)
+  Val Loss: 0.0529, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 215/300]
+  Train Loss: 0.0380, Train Acc: 92.06% (다중 레이블 정확도)
+  Val Loss: 0.0524, Val Acc: 91.99% (다중 레이블 정확도)
+
+[Epoch 216/300]
+  Train Loss: 0.0387, Train Acc: 91.99% (다중 레이블 정확도)
+  Val Loss: 0.0524, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 217/300]
+  Train Loss: 0.0378, Train Acc: 92.20% (다중 레이블 정확도)
+  Val Loss: 0.0519, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 218/300]
+  Train Loss: 0.0383, Train Acc: 92.17% (다중 레이블 정확도)
+  Val Loss: 0.0524, Val Acc: 92.13% (다중 레이블 정확도)
+
+[Epoch 219/300]
+  Train Loss: 0.0380, Train Acc: 92.17% (다중 레이블 정확도)
+  Val Loss: 0.0532, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 220/300]
+  Train Loss: 0.0381, Train Acc: 92.18% (다중 레이블 정확도)
+  Val Loss: 0.0533, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 221/300]
+  Train Loss: 0.0384, Train Acc: 92.08% (다중 레이블 정확도)
+  Val Loss: 0.0532, Val Acc: 91.72% (다중 레이블 정확도)
+
+[Epoch 222/300]
+  Train Loss: 0.0388, Train Acc: 91.93% (다중 레이블 정확도)
+  Val Loss: 0.0525, Val Acc: 92.27% (다중 레이블 정확도)
+
+[Epoch 223/300]
+  Train Loss: 0.0370, Train Acc: 92.48% (다중 레이블 정확도)
+  Val Loss: 0.0551, Val Acc: 92.34% (다중 레이블 정확도)
+
+[Epoch 224/300]
+  Train Loss: 0.0383, Train Acc: 92.18% (다중 레이블 정확도)
+  Val Loss: 0.0527, Val Acc: 92.13% (다중 레이블 정확도)
+
+[Epoch 225/300]
+  Train Loss: 0.0374, Train Acc: 92.42% (다중 레이블 정확도)
+  Val Loss: 0.0521, Val Acc: 92.13% (다중 레이블 정확도)
+
+[Epoch 226/300]
+  Train Loss: 0.0376, Train Acc: 92.39% (다중 레이블 정확도)
+  Val Loss: 0.0533, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 227/300]
+  Train Loss: 0.0368, Train Acc: 92.46% (다중 레이블 정확도)
+  Val Loss: 0.0523, Val Acc: 91.86% (다중 레이블 정확도)
+
+[Epoch 228/300]
+  Train Loss: 0.0376, Train Acc: 92.31% (다중 레이블 정확도)
+  Val Loss: 0.0544, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 229/300]
+  Train Loss: 0.0370, Train Acc: 92.40% (다중 레이블 정확도)
+  Val Loss: 0.0532, Val Acc: 91.65% (다중 레이블 정확도)
+
+[Epoch 230/300]
+  Train Loss: 0.0369, Train Acc: 92.08% (다중 레이블 정확도)
+  Val Loss: 0.0562, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 231/300]
+  Train Loss: 0.0369, Train Acc: 92.62% (다중 레이블 정확도)
+  Val Loss: 0.0556, Val Acc: 91.10% (다중 레이블 정확도)
+
+[Epoch 232/300]
+  Train Loss: 0.0386, Train Acc: 91.99% (다중 레이블 정확도)
+  Val Loss: 0.0524, Val Acc: 91.72% (다중 레이블 정확도)
+
+[Epoch 233/300]
+  Train Loss: 0.0369, Train Acc: 92.30% (다중 레이블 정확도)
+  Val Loss: 0.0547, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 234/300]
+  Train Loss: 0.0385, Train Acc: 92.05% (다중 레이블 정확도)
+  Val Loss: 0.0560, Val Acc: 91.03% (다중 레이블 정확도)
+
+[Epoch 235/300]
+  Train Loss: 0.0367, Train Acc: 92.34% (다중 레이블 정확도)
+  Val Loss: 0.0550, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 236/300]
+  Train Loss: 0.0361, Train Acc: 92.56% (다중 레이블 정확도)
+  Val Loss: 0.0573, Val Acc: 91.10% (다중 레이블 정확도)
+
+[Epoch 237/300]
+  Train Loss: 0.0364, Train Acc: 92.49% (다중 레이블 정확도)
+  Val Loss: 0.0541, Val Acc: 91.93% (다중 레이블 정확도)
+
+[Epoch 238/300]
+  Train Loss: 0.0362, Train Acc: 92.54% (다중 레이블 정확도)
+  Val Loss: 0.0568, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 239/300]
+  Train Loss: 0.0368, Train Acc: 92.36% (다중 레이블 정확도)
+  Val Loss: 0.0565, Val Acc: 90.82% (다중 레이블 정확도)
+
+[Epoch 240/300]
+  Train Loss: 0.0362, Train Acc: 92.55% (다중 레이블 정확도)
+  Val Loss: 0.0557, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 241/300]
+  Train Loss: 0.0363, Train Acc: 92.36% (다중 레이블 정확도)
+  Val Loss: 0.0569, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 242/300]
+  Train Loss: 0.0357, Train Acc: 92.65% (다중 레이블 정확도)
+  Val Loss: 0.0554, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 243/300]
+  Train Loss: 0.0354, Train Acc: 92.67% (다중 레이블 정확도)
+  Val Loss: 0.0551, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 244/300]
+  Train Loss: 0.0360, Train Acc: 92.64% (다중 레이블 정확도)
+  Val Loss: 0.0571, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 245/300]
+  Train Loss: 0.0356, Train Acc: 92.46% (다중 레이블 정확도)
+  Val Loss: 0.0545, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 246/300]
+  Train Loss: 0.0358, Train Acc: 92.58% (다중 레이블 정확도)
+  Val Loss: 0.0557, Val Acc: 91.03% (다중 레이블 정확도)
+
+[Epoch 247/300]
+  Train Loss: 0.0357, Train Acc: 92.56% (다중 레이블 정확도)
+  Val Loss: 0.0559, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 248/300]
+  Train Loss: 0.0356, Train Acc: 92.52% (다중 레이블 정확도)
+  Val Loss: 0.0557, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 249/300]
+  Train Loss: 0.0352, Train Acc: 92.76% (다중 레이블 정확도)
+  Val Loss: 0.0560, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 250/300]
+  Train Loss: 0.0361, Train Acc: 92.42% (다중 레이블 정확도)
+  Val Loss: 0.0566, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 251/300]
+  Train Loss: 0.0347, Train Acc: 92.55% (다중 레이블 정확도)
+  Val Loss: 0.0559, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 252/300]
+  Train Loss: 0.0344, Train Acc: 92.62% (다중 레이블 정확도)
+  Val Loss: 0.0572, Val Acc: 91.03% (다중 레이블 정확도)
+
+[Epoch 253/300]
+  Train Loss: 0.0355, Train Acc: 92.68% (다중 레이블 정확도)
+  Val Loss: 0.0549, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 254/300]
+  Train Loss: 0.0356, Train Acc: 92.88% (다중 레이블 정확도)
+  Val Loss: 0.0554, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 255/300]
+  Train Loss: 0.0338, Train Acc: 92.96% (다중 레이블 정확도)
+  Val Loss: 0.0567, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 256/300]
+  Train Loss: 0.0350, Train Acc: 92.64% (다중 레이블 정확도)
+  Val Loss: 0.0534, Val Acc: 91.72% (다중 레이블 정확도)
+
+[Epoch 257/300]
+  Train Loss: 0.0345, Train Acc: 92.80% (다중 레이블 정확도)
+  Val Loss: 0.0546, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 258/300]
+  Train Loss: 0.0343, Train Acc: 92.74% (다중 레이블 정확도)
+  Val Loss: 0.0560, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 259/300]
+  Train Loss: 0.0330, Train Acc: 92.99% (다중 레이블 정확도)
+  Val Loss: 0.0562, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 260/300]
+  Train Loss: 0.0346, Train Acc: 92.73% (다중 레이블 정확도)
+  Val Loss: 0.0565, Val Acc: 91.10% (다중 레이블 정확도)
+
+[Epoch 261/300]
+  Train Loss: 0.0339, Train Acc: 93.22% (다중 레이블 정확도)
+  Val Loss: 0.0572, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 262/300]
+  Train Loss: 0.0339, Train Acc: 92.92% (다중 레이블 정확도)
+  Val Loss: 0.0574, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 263/300]
+  Train Loss: 0.0344, Train Acc: 92.86% (다중 레이블 정확도)
+  Val Loss: 0.0563, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 264/300]
+  Train Loss: 0.0332, Train Acc: 93.10% (다중 레이블 정확도)
+  Val Loss: 0.0576, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 265/300]
+  Train Loss: 0.0337, Train Acc: 92.93% (다중 레이블 정확도)
+  Val Loss: 0.0581, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 266/300]
+  Train Loss: 0.0345, Train Acc: 92.79% (다중 레이블 정확도)
+  Val Loss: 0.0567, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 267/300]
+  Train Loss: 0.0344, Train Acc: 92.98% (다중 레이블 정확도)
+  Val Loss: 0.0576, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 268/300]
+  Train Loss: 0.0340, Train Acc: 93.05% (다중 레이블 정확도)
+  Val Loss: 0.0575, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 269/300]
+  Train Loss: 0.0330, Train Acc: 92.99% (다중 레이블 정확도)
+  Val Loss: 0.0580, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 270/300]
+  Train Loss: 0.0337, Train Acc: 92.76% (다중 레이블 정확도)
+  Val Loss: 0.0594, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 271/300]
+  Train Loss: 0.0334, Train Acc: 93.07% (다중 레이블 정확도)
+  Val Loss: 0.0587, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 272/300]
+  Train Loss: 0.0322, Train Acc: 93.23% (다중 레이블 정확도)
+  Val Loss: 0.0588, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 273/300]
+  Train Loss: 0.0340, Train Acc: 92.86% (다중 레이블 정확도)
+  Val Loss: 0.0589, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 274/300]
+  Train Loss: 0.0338, Train Acc: 92.99% (다중 레이블 정확도)
+  Val Loss: 0.0579, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 275/300]
+  Train Loss: 0.0335, Train Acc: 92.96% (다중 레이블 정확도)
+  Val Loss: 0.0574, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 276/300]
+  Train Loss: 0.0323, Train Acc: 93.24% (다중 레이블 정확도)
+  Val Loss: 0.0582, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 277/300]
+  Train Loss: 0.0333, Train Acc: 92.80% (다중 레이블 정확도)
+  Val Loss: 0.0571, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 278/300]
+  Train Loss: 0.0337, Train Acc: 93.01% (다중 레이블 정확도)
+  Val Loss: 0.0568, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 279/300]
+  Train Loss: 0.0346, Train Acc: 92.62% (다중 레이블 정확도)
+  Val Loss: 0.0571, Val Acc: 91.03% (다중 레이블 정확도)
+
+[Epoch 280/300]
+  Train Loss: 0.0331, Train Acc: 92.93% (다중 레이블 정확도)
+  Val Loss: 0.0566, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 281/300]
+  Train Loss: 0.0324, Train Acc: 93.22% (다중 레이블 정확도)
+  Val Loss: 0.0577, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 282/300]
+  Train Loss: 0.0330, Train Acc: 93.23% (다중 레이블 정확도)
+  Val Loss: 0.0570, Val Acc: 91.10% (다중 레이블 정확도)
+
+[Epoch 283/300]
+  Train Loss: 0.0342, Train Acc: 92.90% (다중 레이블 정확도)
+  Val Loss: 0.0577, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 284/300]
+  Train Loss: 0.0327, Train Acc: 93.19% (다중 레이블 정확도)
+  Val Loss: 0.0565, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 285/300]
+  Train Loss: 0.0331, Train Acc: 92.88% (다중 레이블 정확도)
+  Val Loss: 0.0565, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 286/300]
+  Train Loss: 0.0321, Train Acc: 93.19% (다중 레이블 정확도)
+  Val Loss: 0.0591, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 287/300]
+  Train Loss: 0.0329, Train Acc: 93.13% (다중 레이블 정확도)
+  Val Loss: 0.0583, Val Acc: 91.37% (다중 레이블 정확도)
+
+[Epoch 288/300]
+  Train Loss: 0.0331, Train Acc: 93.17% (다중 레이블 정확도)
+  Val Loss: 0.0576, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 289/300]
+  Train Loss: 0.0322, Train Acc: 93.10% (다중 레이블 정확도)
+  Val Loss: 0.0584, Val Acc: 91.44% (다중 레이블 정확도)
+
+[Epoch 290/300]
+  Train Loss: 0.0318, Train Acc: 93.29% (다중 레이블 정확도)
+  Val Loss: 0.0579, Val Acc: 91.17% (다중 레이블 정확도)
+
+[Epoch 291/300]
+  Train Loss: 0.0323, Train Acc: 93.13% (다중 레이블 정확도)
+  Val Loss: 0.0578, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 292/300]
+  Train Loss: 0.0330, Train Acc: 92.98% (다중 레이블 정확도)
+  Val Loss: 0.0583, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 293/300]
+  Train Loss: 0.0330, Train Acc: 92.99% (다중 레이블 정확도)
+  Val Loss: 0.0583, Val Acc: 91.24% (다중 레이블 정확도)
+
+[Epoch 294/300]
+  Train Loss: 0.0328, Train Acc: 93.08% (다중 레이블 정확도)
+  Val Loss: 0.0569, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 295/300]
+  Train Loss: 0.0324, Train Acc: 93.27% (다중 레이블 정확도)
+  Val Loss: 0.0574, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 296/300]
+  Train Loss: 0.0320, Train Acc: 93.35% (다중 레이블 정확도)
+  Val Loss: 0.0588, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 297/300]
+  Train Loss: 0.0329, Train Acc: 93.05% (다중 레이블 정확도)
+  Val Loss: 0.0584, Val Acc: 91.30% (다중 레이블 정확도)
+
+[Epoch 298/300]
+  Train Loss: 0.0334, Train Acc: 92.82% (다중 레이블 정확도)
+  Val Loss: 0.0588, Val Acc: 91.51% (다중 레이블 정확도)
+
+[Epoch 299/300]
+  Train Loss: 0.0332, Train Acc: 93.07% (다중 레이블 정확도)
+  Val Loss: 0.0569, Val Acc: 91.58% (다중 레이블 정확도)
+
+[Epoch 300/300]
+  Train Loss: 0.0320, Train Acc: 93.58% (다중 레이블 정확도)
+  Val Loss: 0.0573, Val Acc: 91.44% (다중 레이블 정확도)
+
+[최종 테스트 평가]
+================================================================================
+  - 테스트 손실: 0.0585
+  - 테스트 정확도: 90.49% (다중 레이블 정확도)
+================================================================================
+
+[학습 완료]
+  - 최고 검증 정확도: 92.75%
+  - 최종 테스트 정확도: 90.49%
+  - 최종 에포크: 300/300
+  - 총 학습 시간: 02:39:11 (9551.17초)
+  - 에포크당 평균 시간: 31.84초
+================================================================================
+학습 종료 시간: 2025-11-20 16:10:01
+로그 파일 저장 완료: logs\training_log_20251120_132942.txt
+================================================================================

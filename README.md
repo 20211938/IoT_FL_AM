@@ -157,6 +157,10 @@ Threshold(0.5): [0, 1, 1, 1, 0, 0]  # 정확한 예측 ✓
 - **결함 유형 수**: 6개
 - **총 샘플 수**: 11,719개 (중복 포함)
 - **클래스 불균형 비율**: 약 15.6:1 (Super Elevation vs Recoater capture timing error)
+- **데이터 분할**: 70% 학습 / 15% 검증 / 15% 테스트
+  - 학습 데이터: 모델 학습용
+  - 검증 데이터: 모델 선택 및 조기 종료용
+  - 테스트 데이터: 최종 평가용 (학습 중 절대 사용하지 않음)
 
 ### 모델 구조
 
@@ -216,6 +220,10 @@ python utils/CNN/test_defect_type_classifier.py \
   - 예측된 모든 결함 유형이 실제와 정확히 일치해야 정확한 것으로 간주
   - Threshold: 0.5 (각 클래스별 확률이 0.5 이상이면 활성화)
 - **조기 종료 기준**: 검증 정확도 98% 도달 시 학습 중단
+- **데이터 분할 전략**:
+  - **학습 데이터 (70%)**: 모델 학습에 사용
+  - **검증 데이터 (15%)**: 학습 중 모델 성능 모니터링, 최적 모델 선택, 조기 종료 판단에 사용
+  - **테스트 데이터 (15%)**: 학습 완료 후 최종 성능 평가에만 사용 (학습 중 절대 사용하지 않음)
 
 ---
 
@@ -268,13 +276,19 @@ python utils/CNN/test_defect_type_classifier.py \
    └─ 소수 클래스 및 의미 없는 이름 제거
    └─ 학습에 적합한 데이터만 선별
    
-3. 결함 분류 모델 학습
+3. 데이터 분할 (70:15:15)
+   └─ 학습 데이터: 70% (모델 학습용)
+   └─ 검증 데이터: 15% (모델 선택 및 조기 종료용)
+   └─ 테스트 데이터: 15% (최종 평가용, 학습 중 절대 사용 안 함)
+   
+4. 결함 분류 모델 학습
    └─ ResNet 기반 다중 레이블 분류 모델 학습
    └─ 한 이미지에 여러 결함 유형이 있을 수 있음을 반영
+   └─ 검증 데이터로 모델 성능 모니터링 및 조기 종료
    
-4. 모델 테스트
-   └─ 정확도 평가
-   └─ 혼동 행렬 분석
+5. 최종 평가
+   └─ 테스트 데이터로 최종 성능 평가
+   └─ 다중 레이블 정확도 측정
 ```
 
 ### 두 모델의 관계
@@ -357,6 +371,10 @@ python utils/Dataset/cleanup_dataset.py --data-dir data/labeled_layers --min-cou
 python utils/Dataset/analyze_defect_types.py --data-dir data/labeled_layers
 
 # 4. 결함 분류 모델 학습
+
+python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers
+
+
 python utils/CNN/defect_type_classifier.py \
     --data-dir data/labeled_layers \
     --epochs 20 \

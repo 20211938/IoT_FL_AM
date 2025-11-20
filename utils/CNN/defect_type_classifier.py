@@ -396,11 +396,14 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
             print("\n[오류] 데이터셋이 비어있습니다.")
             return
         
-        # 데이터 분할 (80% 학습, 20% 검증)
-        train_size = int(0.8 * len(base_dataset))
-        val_size = len(base_dataset) - train_size
-        train_indices, val_indices = torch.utils.data.random_split(
-            range(len(base_dataset)), [train_size, val_size],
+        # 데이터 분할 (70% 학습, 15% 검증, 15% 테스트)
+        total_size = len(base_dataset)
+        train_size = int(0.7 * total_size)
+        val_size = int(0.15 * total_size)
+        test_size = total_size - train_size - val_size  # 나머지가 테스트
+        
+        train_indices, val_indices, test_indices = torch.utils.data.random_split(
+            range(len(base_dataset)), [train_size, val_size, test_size],
             generator=torch.Generator().manual_seed(42)
         )
         
@@ -412,6 +415,11 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
         val_dataset = TransformWrapper(
             torch.utils.data.Subset(base_dataset, val_indices.indices),
             transform=val_transform
+        )
+        # 테스트 데이터셋 추가 (검증과 동일한 transform 사용)
+        test_dataset = TransformWrapper(
+            torch.utils.data.Subset(base_dataset, test_indices.indices),
+            transform=val_transform  # 검증과 동일하게 증강 없음
         )
         
         # GPU 사용률 최적화를 위한 DataLoader 설정
@@ -446,10 +454,21 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
             persistent_workers=num_workers > 0,
             prefetch_factor=prefetch_factor if num_workers > 0 else None
         )
+        # 테스트 DataLoader 추가
+        test_loader = DataLoader(
+            test_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=num_workers,
+            pin_memory=torch.cuda.is_available(),
+            persistent_workers=num_workers > 0,
+            prefetch_factor=prefetch_factor if num_workers > 0 else None
+        )
         
         print(f"\n[데이터 분할]")
-        print(f"  - 학습: {len(train_dataset)}개")
-        print(f"  - 검증: {len(val_dataset)}개")
+        print(f"  - 학습: {len(train_dataset)}개 (70%)")
+        print(f"  - 검증: {len(val_dataset)}개 (15%)")
+        print(f"  - 테스트: {len(test_dataset)}개 (15%)")
         
         # 모델 생성 (ResNet 기반)
         model = DefectTypeClassifier(num_classes, model_name=model_name, pretrained=pretrained).to(device)
@@ -528,7 +547,8 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
         start_time = time.time()
         
         best_val_acc = 0.0
-        history = {'train_loss': [], 'train_acc': [], 'val_loss': [], 'val_acc': []}
+        history = {'train_loss': [], 'train_acc': [], 'val_loss': [], 'val_acc': [], 
+                   'test_loss': [], 'test_acc': []}
         
         for epoch in range(epochs):
             # 학습
@@ -672,6 +692,61 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
                 print(f"  - 학습 중단 (Epoch {epoch+1}/{epochs})")
                 break
         
+        # 학습 완료 후 테스트 데이터로 최종 평가
+        print(f"\n[최종 테스트 평가]")
+        print("=" * 80)
+        model.eval()
+        test_loss = 0.0
+        test_correct = 0
+        test_total = 0
+        
+        with torch.no_grad():
+            for images, labels, _, _ in tqdm(test_loader, desc="[Test] 최종 평가"):
+                # CUDA 스트림을 사용한 비동기 데이터 전송
+                if stream is not None:
+                    with torch.cuda.stream(stream):
+                        images = images.to(device, non_blocking=True)
+                        labels = labels.to(device, non_blocking=True)
+                    torch.cuda.current_stream().wait_stream(stream)
+                else:
+                    images = images.to(device, non_blocking=True)
+                    labels = labels.to(device, non_blocking=True)
+                
+                # Mixed Precision Training 사용
+                if use_amp:
+                    try:
+                        with torch.amp.autocast('cuda'):
+                            outputs = model(images)
+                            loss = criterion(outputs, labels)
+                    except AttributeError:
+                        with torch.cuda.amp.autocast():
+                            outputs = model(images)
+                            loss = criterion(outputs, labels)
+                else:
+                    outputs = model(images)
+                    loss = criterion(outputs, labels)
+                
+                test_loss += loss.item()
+                
+                # 다중 레이블 정확도 계산 (threshold 기반)
+                probs = torch.sigmoid(outputs.data)
+                predicted = (probs > 0.5).float()  # threshold = 0.5
+                
+                # 각 샘플에 대해 예측된 레이블과 실제 레이블이 일치하는지 확인
+                correct = (predicted == labels).all(dim=1).sum().item()
+                test_total += labels.size(0)
+                test_correct += correct
+        
+        test_acc = 100 * test_correct / test_total
+        avg_test_loss = test_loss / len(test_loader)
+        
+        history['test_loss'].append(avg_test_loss)
+        history['test_acc'].append(test_acc)
+        
+        print(f"  - 테스트 손실: {avg_test_loss:.4f}")
+        print(f"  - 테스트 정확도: {test_acc:.2f}% (다중 레이블 정확도)")
+        print("=" * 80)
+        
         # 학습 시간 측정 종료
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -681,6 +756,7 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
         
         print(f"\n[학습 완료]")
         print(f"  - 최고 검증 정확도: {best_val_acc:.2f}%")
+        print(f"  - 최종 테스트 정확도: {test_acc:.2f}%")
         print(f"  - 최종 에포크: {epoch+1}/{epochs}")
         print(f"  - 총 학습 시간: {hours:02d}:{minutes:02d}:{seconds:02d} ({elapsed_time:.2f}초)")
         if epoch > 0:

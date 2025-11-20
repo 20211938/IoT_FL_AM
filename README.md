@@ -1,301 +1,136 @@
-# FLAM 프로젝트 코드 분석 (전체 Python 파일 포함)
+# FLAM 프로젝트: 3D 프린팅 결함 탐지 및 분류 시스템
 
 ## 🎯 이 프로젝트가 하는 일
 
-**3D 프린팅 과정에서 결함을 찾는 AI 모델**을 만드는 프로젝트입니다.
-- 여러 공장(클라이언트)의 데이터를 모으지 않고도 함께 학습하는 **연합 학습(Federated Learning)** 방식 사용
-- 각 픽셀을 3가지로 분류: **파우더(0) / 부품(1) / 결함(2)**
-- MongoDB에서 레이블된 레이어 이미지를 다운로드하여 학습 데이터로 활용
+**3D 프린팅 과정에서 결함을 탐지하고 분류하는 2단계 AI 시스템**을 구축하는 프로젝트입니다.
 
----
-
-## 📁 파일 구조 및 역할
+### 전체 시스템 구조
 
 ```
-FLAM/
-├── Federated_learning.ipynb          # 메인 노트북 (실행 스크립트)
-├── utils/
-│   ├── image_processing.py           # 이미지 전처리 및 타일링
-│   ├── dataset_functions.py          # 데이터셋 생성 및 관리
-│   ├── unet.py                       # U-Net 모델 정의
-│   ├── federated_averaging.py        # FedAvg 연합 학습 알고리즘
-│   ├── visualization.py              # 결과 시각화 및 평가
-│   ├── CNN/
-│   │   ├── defect_type_classifier.py     # 결함 유형 분류 모델 학습
-│   │   ├── test_defect_type_classifier.py # 결함 분류 모델 테스트
-│   │   └── test_results_analysis.md      # 테스트 결과 분석
-│   ├── AprilGAN/
-│   │   ├── zero_shot_defect_classifier.py # 제로샷 결함 분류 모델
-│   │   └── test_zero_shot_classifier.py   # 제로샷 모델 테스트
-│   └── Dataset/
-│       ├── download_labeled_layers.py    # MongoDB에서 레이블된 이미지 다운로드
-│       ├── cleanup_dataset.py            # 데이터셋 정리 및 소수 클래스 제거
-│       ├── analyze_defect_types.py       # 결함 유형 분석
-│       └── dataset_info.md               # 데이터셋 정보 문서
-└── data/                             # 이미지 데이터 저장소
-    └── labeled_layers/               # 다운로드된 레이블된 이미지
+입력 이미지
+    ↓
+[1단계: U-Net 모델]
+    → 픽셀 단위로 결함 영역 탐지
+    → 출력: 결함이 있는 영역 (마스크)
+    ↓
+[2단계: CNN 분류 모델]
+    → 탐지된 결함 영역을 입력받아
+    → 출력: 결함 유형 분류 (Super Elevation, Fail, Recoater Streaking 등)
 ```
 
----
+## 🚀 전체 시스템 학습 및 동작 흐름
 
-## 📝 각 파일 상세 분석
+### 시스템 전체 흐름
 
-### 1. `utils/image_processing.py` - 이미지 전처리 및 타일링
-
-**역할**: 큰 이미지를 작은 타일로 나누고, 타일을 다시 합치는 기능 제공
-
-### 2. `utils/dataset_functions.py` - 데이터셋 생성 및 관리
-
-**역할**: 클라이언트별 데이터셋 생성 및 데이터 결합
-
-### 3. `utils/unet.py` - U-Net 모델 정의
-
-**역할**: U-Net 아키텍처 모델 생성 및 컴파일
-
-### 4. `utils/federated_averaging.py` - 연합 학습 알고리즘
-
-**역할**: FedAvg 알고리즘 구현 - 각 클라이언트에서 로컬 학습 후 서버에서 가중치 평균
-
-#### 알고리즘 동작 과정
+이 프로젝트는 **2단계로 구성된 결함 탐지 및 분류 시스템**입니다:
 
 ```
-1. 초기화
-   - 각 클라이언트의 데이터 개수 계산
-   - 가중 평균을 위한 비율 계산 (proportionsDict)
-   - 서버 가중치 초기화
+[학습 단계]
+1. U-Net 모델 학습 → 결함 위치 탐지 학습
+2. CNN 분류 모델 학습 → 결함 유형 분류 학습
 
-2. 각 서버 라운드마다:
-   
-   a) 클라이언트 업데이트 (로컬 학습)
-      - 각 클라이언트에 대해:
-        1. 글로벌 모델 복제
-        2. 서버 가중치로 초기화
-        3. 로컬 데이터로 LOCAL_EPOCHS만큼 학습
-        4. 학습된 가중치 저장
-        5. 손실/정확도 기록
-   
-   b) 서버 업데이트 (가중치 평균)
-      - 각 클라이언트의 가중치를 데이터 비율로 가중 평균
-      - 공식: w_global = Σ(n_k / N) * w_k
-        - n_k: 클라이언트 k의 데이터 개수
-        - N: 전체 데이터 개수
-        - w_k: 클라이언트 k의 가중치
-   
-   c) 글로벌 모델 업데이트
-      - 평균된 가중치를 글로벌 모델에 적용
-   
-   d) 테스트 평가
-      - 테스트셋으로 성능 평가
-      - 테스트 손실/정확도 기록
 
-3. 반환
-   - 학습된 모델 및 모든 기록 반환
-```
 
-#### 가중 평균 예시
+## 🔍 1단계: U-Net을 이용한 픽셀 단위 결함 탐지
 
-```python
-# 클라이언트별 데이터 개수
-client1: 1000개 → 비율 0.5
-client2: 500개  → 비율 0.25
-client3: 500개  → 비율 0.25
+### U-Net 모델이 하는 일
 
-# 가중 평균
-w_global = 0.5 * w_client1 + 0.25 * w_client2 + 0.25 * w_client3
-```
-
----
-
-### 5. `utils/visualization.py` - 결과 시각화 및 평가
-
-**역할**: 학습된 모델의 예측 결과 시각화 및 성능 평가
-
-### 6. `utils/Dataset/download_labeled_layers.py` - MongoDB 이미지 다운로드
-
-**역할**: MongoDB GridFS에서 레이블된 레이어 이미지를 다운로드
-
-**주요 기능**:
-- MongoDB 연결 및 데이터베이스 목록 조회
-- `IsLabeled=True`인 레이어만 필터링
-- GridFS에서 이미지 파일 다운로드
-- 메타데이터 JSON 파일 저장 (선택사항)
-- 전체 다운로드 제한 설정 (기본값: 10,000개)
-
-### 7. `utils/Dataset/cleanup_dataset.py` - 데이터셋 정리
-
-**역할**: 다운로드된 데이터셋에서 소수 클래스 및 의미 없는 이름 제거
-
-**주요 기능**:
-- 결함 유형별 통계 수집
-- 비율 기반 필터링 (기본값: 1% 미만 제거)
-- 의미 없는 이름 감지 및 제거 (숫자만, D1/D2 패턴, 2자 이하)
-- DRY RUN 모드 지원
-
-### 8. `utils/CNN/defect_type_classifier.py` - 결함 유형 분류 모델
-
-**역할**: 특정 결함 유형을 분류하는 CNN 모델 학습
-
-**주요 기능**:
-- 메타데이터에서 결함 유형 추출
-- CNN 기반 다중 클래스 분류 모델
-- 학습/검증 데이터 분할
-- 체크포인트 저장 및 최적 모델 선택
-
-### 9. `utils/AprilGAN/zero_shot_defect_classifier.py` - 제로샷 결함 분류 모델
-
-**역할**: AprilGAN 기반 제로샷 결함 분류 모델
-
-**주요 기능**:
-- GAN 기반 이상 탐지
-- 전처리 없이 결함 분류
-- 제로샷 학습 지원
-
----
-
-## 🚀 전체 실행 과정 (기본 설정)
-
-프로젝트를 처음부터 실행하는 전체 과정입니다. 모든 명령어는 기본 설정을 사용합니다.
-
-### 1단계: 데이터 다운로드
-
-MongoDB에서 레이블된 이미지를 다운로드합니다 (최대 10,000개).
-
-```bash
-python utils/Dataset/download_labeled_layers.py --metadata
-```
-
-**결과**: `data/labeled_layers/` 디렉토리에 이미지 파일과 메타데이터 JSON 파일이 저장됩니다.
-
-### 2단계: 데이터셋 정리
-
-다운로드된 데이터에서 소수 클래스(1% 미만) 및 의미 없는 이름을 제거합니다.
-
-```bash
-python utils/Dataset/cleanup_dataset.py --data-dir data/labeled_layers
-```
-
-**결과**: 학습에 적합한 데이터만 남게 됩니다.
-
-### 3단계: 결함 분류 모델 학습
-
-정리된 데이터로 결함 유형 분류 모델을 학습합니다.
-
-```bash
-python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers
-```
-
-**결과**: `checkpoints/` 디렉토리에 최적 모델이 저장됩니다.
-
-### 4단계: 모델 테스트
-
-학습된 모델의 성능을 평가합니다.
-
-```bash
-python utils/CNN/test_defect_type_classifier.py \
-    --checkpoint checkpoints/best_model.pth \
-    --data-dir data/labeled_layers
-```
-
-**결과**: 정확도, 혼동 행렬 등 평가 결과가 출력됩니다.
-
----
-
-## 🔍 U-Net을 이용한 픽셀 단위 결함 탐지 (요약)
-
-### 개요
-
-U-Net 모델을 사용하여 이미지의 각 픽셀을 3가지 클래스로 분류합니다:
+U-Net은 **이미지의 각 픽셀을 분석하여 결함이 있는 위치를 찾아내는 모델**입니다. 이미지 전체를 입력받아 픽셀 단위로 세 가지 영역을 구분합니다:
 - **파우더 (0)**: 파우더 영역
-- **부품 (1)**: 정상 부품 영역
-- **결함 (2)**: 결함 영역
+- **부품 (1)**: 정상 부품 영역  
+- **결함 (2)**: 결함이 있는 영역
 
-### 주요 특징
+### U-Net의 동작 원리
 
-- **연합 학습 (Federated Learning)**: 여러 공장의 데이터를 모으지 않고도 함께 학습
-- **픽셀 단위 분할**: 이미지의 각 픽셀을 개별적으로 분류
-- **타일링**: 큰 이미지를 128×128 타일로 분할하여 처리
-- **8개 클라이언트**: 7개 공장에서 학습, 1개 공장으로 테스트
+U-Net은 **인코더-디코더 구조**를 가진 딥러닝 모델입니다:
 
-### 실행 방법
+1. **인코더 (Encoder)**: 이미지를 분석하여 특징을 추출
+   - 이미지를 점점 작은 크기로 압축하면서 중요한 특징을 학습
+   - 여러 층의 합성곱(Convolution) 레이어를 통해 이미지의 패턴을 이해
 
-```python
-# Jupyter Notebook에서 실행
-# Federated_learning.ipynb 파일 참조
-```
+2. **디코더 (Decoder)**: 추출된 특징을 바탕으로 원본 크기로 복원
+   - 압축된 특징을 다시 확대하여 원본 이미지 크기로 복원
+   - 각 픽셀에 대해 "파우더/부품/결함" 중 하나를 예측
 
-### 하이퍼파라미터
+3. **Skip Connection**: 인코더의 중간 결과를 디코더에 직접 전달
+   - 이미지의 세부 정보를 보존하여 정확한 픽셀 단위 분류 가능
+   - U자 형태의 구조로 인해 "U-Net"이라는 이름이 붙음
 
-```python
-SERVER_ROUNDS = 2                 # 서버 라운드 수
-LOCAL_EPOCHS = 5                  # 클라이언트당 로컬 에포크
-LOCAL_BATCH_SIZE = 32             # 배치 크기
-LOCAL_LEARNING_RATE = 8e-05       # 로컬 학습률
-tileSize = 128                    # 타일 크기
-```
+### 출력 결과
 
-### 알고리즘 동작
+U-Net의 출력은 **원본 이미지와 동일한 크기의 마스크**입니다:
+- 각 픽셀마다 0(파우더), 1(부품), 2(결함) 중 하나의 값이 할당됨
+- 결함 영역(값이 2인 픽셀)을 시각화하면 결함의 위치와 형태를 확인할 수 있음
 
-1. 각 클라이언트에서 로컬 학습 수행
-2. 서버에서 가중치를 데이터 비율로 가중 평균
-3. 글로벌 모델 업데이트
-4. 반복 (SERVER_ROUNDS만큼)
+### 데이터셋 및 학습 방식
+
+- **데이터 요구사항**: 픽셀 단위로 마스킹된 전처리 데이터(npy 파일) 필요
+- **현재 상황**: 전처리된 데이터가 충분하지 않아 **공개된 작은 데이터셋만 사용**
+- **학습 방식**: 연합 학습(Federated Learning)을 통해 여러 공장의 데이터를 활용하되, 실제 데이터는 공유하지 않고 모델 가중치만 공유
+
+### U-Net의 역할
+
+U-Net은 **"결함이 어디에 있는가?"**를 답하는 모델입니다. 결함의 위치를 정확히 찾아내지만, **"어떤 종류의 결함인가?"**는 알려주지 않습니다.
 
 ---
 
-## 🎓 결함 분류 모델 상세 설명
+## 🎓 2단계: CNN 기반 결함 유형 분류 모델
 
-### 개요
+### 다중 레이블 분류
 
-결함 분류 모델은 이미지 전체를 입력받아 **어떤 종류의 결함인지**를 분류하는 CNN 기반 다중 클래스 분류 모델입니다. U-Net과 달리 픽셀 단위가 아닌 이미지 단위로 결함 유형을 판단합니다.
+이 모델은 **다중 레이블 분류 모델**입니다. 일반적인 분류 모델과 달리, **한 이미지에 여러 결함 유형을 동시에 예측**할 수 있습니다.
 
-### 데이터셋 구조
+#### 다중 레이블 분류 동작 방식
 
-#### 디렉토리 구조
+1. **입력**: 결함이 포함된 이미지
+2. **처리**: ResNet34 모델로 이미지 특징 추출 및 분석
+3. **출력**: 각 결함 유형별 확률 값
+   - Super Elevation: 0.96
+   - Fail: 0.94
+   - Recoater Streaking: 0.12
+   - Laser capture timing error: 0.05
+   - ...
+4. **최종 예측**: Threshold(0.5)를 기준으로 활성화
+   - 0.5 이상이면 해당 결함 유형이 있다고 판단
+   - 결과: [Super Elevation: 있음, Fail: 있음, Recoater Streaking: 없음, ...]
+
+#### 실제 예시
 
 ```
-data/labeled_layers/
-├── {database_name}/              # 데이터베이스별 디렉토리
-│   ├── {db_name}_layer{num}_{id}.jpg      # 이미지 파일
-│   ├── {db_name}_layer{num}_{id}.jpg.json # 메타데이터 파일
-│   └── ...
-└── ...
+입력 이미지: layer0003.jpg
+메타데이터에 포함된 결함:
+  - TagBox 1: "Fail"
+  - TagBox 2: "Super Elevation"
+  - TagBox 3: "Recoater Streaking"
+
+실제 레이블 (멀티-핫 벡터):
+[0, 1, 1, 1, 0, 0]  # 3개 결함 모두 활성화
+
+모델 예측:
+확률: [0.11, 0.96, 0.94, 0.92, 0.18, 0.31]
+Threshold(0.5): [0, 1, 1, 1, 0, 0]  # 정확한 예측 ✓
 ```
 
-#### 파일 형식
+### 모델의 동작 방식
 
-- **이미지 파일**: `.jpg` 형식의 레이어 이미지
-- **메타데이터 파일**: `.jpg.json` 형식의 JSON 파일
-  - 각 이미지에 대응하는 메타데이터
-  - 결함 유형 정보 포함
+1. **입력**: U-Net이 탐지한 결함 영역 (또는 결함이 포함된 이미지)
+2. **처리**: ResNet 기반 CNN 모델로 이미지의 특징을 분석
+3. **출력**: 결함 유형 분류 결과
+   - Super Elevation (표면 높이 상승)
+   - Recoater Streaking (Recoater 스트리킹)
+   - Fail (일반 실패)
+   - Laser capture timing error (레이저 캡처 타이밍 오류)
+   - 등등...
 
-#### 메타데이터 구조
 
-메타데이터 JSON 파일에는 다음 정보가 포함됩니다:
 
-```json
-{
-  "DepositionImageModel": {
-    "TagBoxes": [
-      {
-        "Name": "D1",
-        "Comment": "Super Elevation"
-      }
-    ]
-  },
-  "ScanningImageModel": {
-    "TagBoxes": [
-      {
-        "Name": "D2",
-        "Comment": "Recoater Streaking"
-      }
-    ]
-  }
-}
-```
+#### 주요 특징
 
-- `DepositionImageModel.TagBoxes`: Deposition 이미지의 결함 태그
-- `ScanningImageModel.TagBoxes`: Scanning 이미지의 결함 태그
-- 각 태그의 `Comment` 필드가 결함 유형으로 사용됩니다 (없으면 `Name` 사용)
+- **다중 레이블 분류**: 한 이미지에 여러 결함 유형을 동시에 예측
+- **DepositionImageModel 전용**: 현재 데이터셋은 DepositionImageModel에만 결함이 있음
+- **멀티-핫 인코딩**: 각 이미지의 모든 결함 유형을 벡터로 표현
+- **BCEWithLogitsLoss**: 다중 레이블 분류에 적합한 손실 함수 사용
+
 
 ### 결함 종류 (Defect Types)
 
@@ -312,8 +147,9 @@ data/labeled_layers/
 
 **참고사항**:
 - `Recoater Streaking`과 `Reocater Streaking`은 서로 다른 클래스입니다 (오타가 아닙니다)
-- 일부 이미지는 여러 결함 유형을 동시에 가질 수 있습니다
-- 총 샘플 수(11,719개)가 파일 수(9,665개)보다 많은 이유는 하나의 이미지가 여러 결함 유형을 포함할 수 있기 때문입니다
+- **다중 레이블 분류**: 한 이미지에 여러 결함 유형이 동시에 존재할 수 있으며, 모델은 모든 결함을 동시에 예측합니다
+- 총 샘플 수(14,205개)가 파일 수(9,665개)보다 많은 이유는 하나의 이미지가 여러 결함 유형을 포함할 수 있기 때문입니다
+- 현재 데이터셋은 **DepositionImageModel에만 결함이 있으며**, ScanningImageModel에는 결함이 없습니다
 
 ### 데이터셋 통계
 
@@ -324,41 +160,43 @@ data/labeled_layers/
 
 ### 모델 구조
 
-```
-입력: 이미지 (224×224×3)
-  ↓
-CNN 레이어
-  ├─ Conv2D + BatchNorm + ReLU
-  ├─ MaxPooling
-  ├─ Conv2D + BatchNorm + ReLU
-  ├─ MaxPooling
-  └─ ...
-  ↓
-Fully Connected 레이어
-  ↓
-Softmax
-  ↓
-출력: 결함 유형 클래스 확률 (6개 클래스)
-```
+CNN 분류 모델은 **ResNet34 기반 Transfer Learning 모델**입니다:
 
-### 학습 과정
+1. **입력**: 결함이 포함된 이미지 (224×224 크기)
+2. **특징 추출**: ResNet34 백본을 통해 이미지의 특징 추출
+   - ImageNet에서 사전 학습된 가중치 사용
+   - 이미지의 패턴과 특징을 이해
+3. **분류**: 추출된 특징을 바탕으로 결함 유형 분류
+   - 각 결함 유형에 대해 독립적으로 확률 계산
+   - 여러 결함 유형이 동시에 존재할 수 있음을 반영
+4. **출력**: 각 결함 유형별 확률 값
+   - 예: [Super Elevation: 0.96, Fail: 0.94, Recoater Streaking: 0.92, ...]
+   - Threshold(0.5)를 기준으로 최종 예측 결정
 
-1. **메타데이터 파싱**: JSON 파일에서 결함 유형 추출
-2. **데이터 필터링**: 최소 샘플 수 미만인 클래스 제거 (기본값: 10개)
-3. **데이터 분할**: 학습 80% / 검증 20%
-4. **모델 초기화**: CNN 모델 생성
-5. **학습**: Adam 옵티마이저로 학습
-6. **검증**: 각 에포크마다 검증 정확도 확인
-7. **체크포인트 저장**: 최고 성능 모델 저장
 
 ### 기본 하이퍼파라미터
 
 ```python
-epochs = 20              # 학습 에포크 수
-batch_size = 16         # 배치 크기
-learning_rate = 0.001   # 학습률
-min_count = 10          # 최소 샘플 수 (이보다 적으면 클래스 제거)
+epochs = 300                    # 학습 에포크 수
+batch_size = 32                 # 배치 크기
+learning_rate = 0.0001          # 학습률
+min_count = 10                  # 최소 샘플 수 (이보다 적으면 클래스 제거)
+image_size = 224                # 이미지 크기
+weight_decay = 1e-4             # Weight Decay (정규화)
+label_smoothing = 0.1           # Label Smoothing (단일 레이블용, 다중 레이블에서는 미사용)
+scheduler_type = "cosine"       # 학습률 스케줄러 (cosine, cosine_warmup, plateau, step)
+early_stopping_threshold = 98.0 # 조기 종료 기준 (검증 정확도 %)
+use_data_augmentation = True     # 데이터 증강 사용 여부
+model_name = "resnet34"         # 모델 아키텍처 (resnet18, resnet34, resnet50)
+pretrained = True               # 사전 학습된 가중치 사용 여부
 ```
+
+#### 손실 함수
+
+- **BCEWithLogitsLoss**: 다중 레이블 분류에 적합
+  - 각 클래스를 독립적인 이진 분류 문제로 처리
+  - Sigmoid + Binary Cross Entropy 결합
+  - 여러 결함이 동시에 존재하는 상황에 최적화
 
 ### 실행 명령어
 
@@ -374,98 +212,79 @@ python utils/CNN/test_defect_type_classifier.py \
 
 ### 평가 지표
 
-- **전체 정확도**: 전체 예측 중 정확한 예측 비율
-- **클래스별 정확도**: 각 결함 유형별 정확도
-- **혼동 행렬**: 클래스 간 오분류 패턴 분석
+- **다중 레이블 정확도**: 모든 레이블이 정확히 일치하는 샘플의 비율
+  - 예측된 모든 결함 유형이 실제와 정확히 일치해야 정확한 것으로 간주
+  - Threshold: 0.5 (각 클래스별 확률이 0.5 이상이면 활성화)
+- **조기 종료 기준**: 검증 정확도 98% 도달 시 학습 중단
 
 ---
 
-## 🔄 전체 워크플로우
+## 🔄 전체 시스템 워크플로우
 
-### A. 결함 분류 모델 학습 워크플로우 (새로운 방식)
+### 실제 발표 시나리오
 
 ```
-1. 데이터 다운로드
-   └─ utils/Dataset/download_labeled_layers.py: MongoDB에서 레이블된 이미지 다운로드 (최대 10,000개)
-   
-2. 데이터셋 정리
-   └─ utils/Dataset/cleanup_dataset.py: 소수 클래스 및 의미 없는 이름 제거
-      ├─ 비율 기반 필터링 (1% 미만)
-      ├─ 의미 없는 이름 제거 (숫자만, D1/D2 패턴)
-      └─ 정리된 데이터셋 생성
-   
-3. 결함 유형 분석 (선택사항)
-   └─ utils/Dataset/analyze_defect_types.py: 데이터셋 통계 및 분포 분석
-   
-4. 결함 분류 모델 학습
-   └─ utils/CNN/defect_type_classifier.py: CNN 기반 다중 클래스 분류 모델 학습
-      ├─ 메타데이터에서 결함 유형 추출
-      ├─ 학습/검증 데이터 분할
-      ├─ CNN 모델 학습
-      └─ 최적 모델 체크포인트 저장
-   
-5. 모델 테스트
-   └─ utils/CNN/test_defect_type_classifier.py: 학습된 모델 평가
-      ├─ 정확도 계산
-      ├─ 혼동 행렬 생성
-      └─ 오분류 분석
+[입력] 3D 프린팅 레이어 이미지
+    ↓
+[1단계: U-Net 모델]
+    → 픽셀 단위 분석
+    → 결함 영역 탐지 (마스크 생성)
+    → 출력: "여기에 결함이 있습니다"
+    ↓
+[2단계: CNN 분류 모델]
+    → 탐지된 결함 영역 입력
+    → 결함 유형 분석
+    → 출력: "이 결함은 Super Elevation입니다"
 ```
 
-### B. 픽셀 단위 결함 탐지 워크플로우 (기존 방식)
+### U-Net 모델 학습 워크플로우
 
 ```
 1. 데이터 준비
-   └─ utils/Dataset/download_labeled_layers.py: MongoDB에서 레이블된 이미지 다운로드
+   └─ 전처리된 npy 파일 (픽셀 단위 마스킹 데이터)
+   └─ 현재: 공개된 작은 데이터셋만 사용
    
 2. 이미지 전처리
-   └─ image_processing.py: 이미지를 128×128 타일로 분할
+   └─ 큰 이미지를 128×128 타일로 분할
    
-3. 데이터셋 생성
-   └─ dataset_functions.py: 클라이언트별 데이터셋 생성
+3. 연합 학습
+   └─ 여러 공장(클라이언트)에서 로컬 학습
+   └─ 서버에서 가중치 평균
+   └─ 반복하여 모델 개선
    
-4. 모델 초기화
-   └─ unet.py: U-Net 모델 생성 및 컴파일
-   
-5. 연합 학습
-   └─ federated_averaging.py: FedAvg 알고리즘 실행
-      ├─ 각 클라이언트에서 로컬 학습
-      ├─ 서버에서 가중치 평균
-      └─ 반복
-   
-6. 결과 평가 및 시각화
-   └─ visualization.py: 예측 결과 시각화 및 성능 평가
+4. 결과 평가
+   └─ 픽셀 단위 정확도 측정
+   └─ 결함 탐지 성능 평가
 ```
 
----
-
-## 🔑 핵심 개념 정리
-
-| 개념 | 설명 | 관련 파일 |
-|------|------|----------|
-| **타일링** | 큰 이미지를 128×128 조각으로 나누기 | `image_processing.py` |
-| **클라이언트** | 각 공장 (client1~client8) | `dataset_functions.py` |
-| **연합 학습** | 각 공장에서 따로 학습 후 서버에서 합치기 | `federated_averaging.py` |
-| **U-Net** | 이미지 분할용 모델 (인코더-디코더 + Skip Connection) | `unet.py` |
-| **3클래스** | 파우더(0), 부품(1), 결함(2) | 모든 파일 |
-| **GridFS** | MongoDB의 대용량 파일 저장 시스템 | `download_labeled_layers.py` |
-| **MeanIoU** | 평균 Intersection over Union (정확도 지표) | `visualization.py` |
-
----
-
-## 📊 주요 하이퍼파라미터
-
-```python
-# 모델 설정
-tileSize = 128                    # 타일 크기
-learning_rate = 0.0008            # 모델 초기 학습률
-
-# 연합 학습 설정
-SERVER_ROUNDS = 2                 # 서버 라운드 수
-LOCAL_EPOCHS = 5                  # 클라이언트당 로컬 에포크
-LOCAL_BATCH_SIZE = 32             # 배치 크기
-LOCAL_LEARNING_RATE = 8e-05       # 로컬 학습률
+### CNN 결함 분류 모델 학습 워크플로우
 
 ```
+1. 데이터 다운로드
+   └─ MongoDB에서 레이블된 이미지 다운로드
+   └─ DepositionImageModel의 TagBoxes에서 결함 유형 추출
+   
+2. 데이터셋 정리
+   └─ 소수 클래스 및 의미 없는 이름 제거
+   └─ 학습에 적합한 데이터만 선별
+   
+3. 결함 분류 모델 학습
+   └─ ResNet 기반 다중 레이블 분류 모델 학습
+   └─ 한 이미지에 여러 결함 유형이 있을 수 있음을 반영
+   
+4. 모델 테스트
+   └─ 정확도 평가
+   └─ 혼동 행렬 분석
+```
+
+### 두 모델의 관계
+
+- **U-Net**: 결함의 위치를 찾는 모델 (어디에?)
+- **CNN 분류 모델**: 결함의 종류를 분류하는 모델 (무엇인가?)
+- **연결 방식**: U-Net의 출력(결함 영역)을 CNN 분류 모델의 입력으로 사용
+- **독립성**: 두 모델은 서로 다른 데이터셋으로 학습되며, U-Net 모델은 수정하지 않고 별도 분류 모델을 추가
+
+---
 
 ---
 
@@ -550,62 +369,9 @@ python utils/CNN/test_defect_type_classifier.py \
     --data-dir data/labeled_layers
 ```
 
-### 픽셀 단위 결함 탐지 (연합 학습)
+### U-Net 모델 학습 (연합 학습)
 
-```python
-# 1. 데이터 준비 (선택사항 - MongoDB에서 다운로드)
-# python utils/Dataset/download_labeled_layers.py --output data/labeled_layers
-
-# 2. 데이터셋 생성
-datasetImageDict, datasetMaskDict = create_dataset(
-    clientIdentifierDict, 
-    imagePath0, 
-    imagePath1, 
-    npyPath, 
-    tileSize=128
-)
-
-# 3. 학습/테스트 나누기
-trainClients = ['client1', 'client2', ..., 'client7']  # 7개 공장
-testClients = ['client8']                              # 1개 공장 (테스트용)
-
-# 4. 모델 초기화
-model = initialize_unet()
-
-# 5. 연합 학습 시작
-model, serverWeights, lossDict, testLoss, accuracyDict, testAccuracy = \
-    federated_averaging(
-        model,
-        SERVER_ROUNDS=2,
-        LOCAL_EPOCHS=5,
-        LOCAL_BATCH_SIZE=32,
-        LOCAL_LEARNING_RATE=8e-05,
-        clientIDs=trainClients,
-        imageDict=datasetImageDict,
-        segMaskDict=datasetMaskDict,
-        testImages=testImages,
-        testMasks=testMasks
-    )
-
-# 6. 결과 시각화
-visualize_results_testset(
-    model,
-    datasetImageDict,
-    datasetMaskDict,
-    testClients,
-    clientIdentifierDict
-)
-
-# 7. 모델 비교 (선택사항)
-compare_results_testset(
-    cl_model,  # 중앙화 학습 모델
-    fl_model,  # 연합 학습 모델
-    datasetImageDict,
-    datasetMaskDict,
-    testClients,
-    clientIdentifierDict
-)
-```
+U-Net 모델은 전처리된 npy 파일이 필요하며, 현재는 공개된 작은 데이터셋만 사용합니다. Jupyter Notebook (`Federated_learning.ipynb`)에서 연합 학습을 통해 모델을 학습합니다.
 
 ---
 
@@ -643,22 +409,34 @@ compare_results_testset(
 
 ---
 
-## 🎯 요약
+## 🎯 시스템 요약
 
-### 결함 분류 모델 (새로운 방식)
-1. **MongoDB에서 레이블된 이미지 다운로드** (`utils/Dataset/download_labeled_layers.py`)
-2. **데이터셋 정리** - 소수 클래스 및 의미 없는 이름 제거 (`utils/Dataset/cleanup_dataset.py`)
-3. **결함 유형 분석** - 데이터셋 통계 확인 (`utils/Dataset/analyze_defect_types.py`)
-4. **CNN 모델 학습** - 결함 유형 분류 모델 학습 (`utils/CNN/defect_type_classifier.py`)
-5. **모델 테스트** - 학습된 모델 평가 (`utils/CNN/test_defect_type_classifier.py`)
+### 전체 시스템 구조
 
-### 픽셀 단위 결함 탐지 (기존 방식)
-1. **MongoDB에서 레이블된 이미지 다운로드** (`utils/Dataset/download_labeled_layers.py`)
-2. **이미지를 작은 조각으로 나눔** (128×128 타일) (`image_processing.py`)
-3. **각 공장별로 데이터 정리** (8개 클라이언트) (`dataset_functions.py`)
-4. **U-Net 모델 생성** (3클래스 분류) (`unet.py`)
-5. **각 공장에서 학습 → 서버에서 평균 → 반복** (연합 학습) (`federated_averaging.py`)
-6. **결과 확인 및 시각화** (`visualization.py`)
+이 프로젝트는 **2단계 결함 탐지 및 분류 시스템**입니다:
+
+#### 1단계: U-Net 모델 (결함 탐지)
+- **목적**: 이미지에서 결함이 있는 위치를 픽셀 단위로 찾기
+- **입력**: 3D 프린팅 레이어 이미지
+- **출력**: 각 픽셀의 분류 결과 (파우더/부품/결함)
+- **데이터**: 전처리된 npy 파일 필요 (공개된 작은 데이터셋 사용)
+- **학습 방식**: 연합 학습 (Federated Learning)
+
+#### 2단계: CNN 분류 모델 (결함 유형 분류)
+- **목적**: U-Net이 찾은 결함이 어떤 종류인지 분류
+- **입력**: U-Net이 탐지한 결함 영역 (또는 결함이 포함된 이미지)
+- **출력**: 결함 유형 분류 (Super Elevation, Fail, Recoater Streaking 등)
+- **데이터**: MongoDB에서 다운로드한 레이블된 이미지
+- **특징**: 다중 레이블 분류 (한 이미지에 여러 결함 유형 가능)
+
+### 개발 철학
+
+- **원래 목표**: U-Net 모델을 개선하여 결함 탐지와 분류를 동시에 수행
+- **최종 결정**: U-Net 모델을 수정하지 않고, 별도의 CNN 분류 모델을 만들어 U-Net의 출력에 연결
+- **장점**: 
+  - U-Net 모델의 안정성 유지
+  - 분류 모델을 독립적으로 개선 가능
+  - 각 모델을 서로 다른 데이터셋으로 학습 가능
 
 ---
 
@@ -686,67 +464,3 @@ scikit-learn   # 머신러닝 유틸리티 (테스트용)
 
 ---
 
-## 📝 파일별 함수 목록
-
-### `image_processing.py`
-- `split_image()`: 이미지를 타일로 분할
-- `unsplit_image()`: 타일을 원본 이미지로 복원
-- `unsplit_image_mask()`: 타일 마스크를 원본 마스크로 복원
-- `preprocess_image()`: 이미지 전처리 및 타일링
-
-### `dataset_functions.py`
-- `create_dataset()`: 클라이언트별 데이터셋 생성
-- `unwrap_client_data()`: 여러 클라이언트 데이터 결합
-
-### `unet.py`
-- `initialize_unet()`: U-Net 모델 생성 및 컴파일
-
-### `federated_averaging.py`
-- `federated_averaging()`: FedAvg 연합 학습 알고리즘 실행
-
-### `visualization.py`
-- `visualize_results_testset()`: 테스트셋 결과 시각화
-- `compare_results_testset()`: CL vs FL 모델 비교 시각화
-
-### `utils/Dataset/download_labeled_layers.py`
-- `parse_args()`: 명령줄 인자 파싱
-- `build_client()`: MongoDB 클라이언트 생성
-- `resolve_databases()`: 처리할 DB 목록 결정
-- `ensure_collections()`: 컬렉션 확인 및 GridFS 생성
-- `truthy_filter()`: IsLabeled 필터 생성
-- `doc_to_filename()`: 문서를 파일명으로 변환
-- `write_bytes()`: 바이트 데이터 저장
-- `write_metadata()`: 메타데이터 JSON 저장
-- `download_for_db()`: DB별 이미지 다운로드
-- `main()`: 메인 실행 함수
-
-### `utils/Dataset/cleanup_dataset.py`
-- `extract_defect_types_from_metadata()`: JSON 메타데이터에서 결함 유형 추출
-- `is_meaningless_name()`: 의미 없는 이름 확인
-- `cleanup_dataset()`: 데이터셋 정리 및 삭제 메인 함수
-- `main()`: CLI 인터페이스
-
-### `utils/Dataset/analyze_defect_types.py`
-- `extract_defect_types_from_metadata()`: JSON 메타데이터에서 결함 유형 추출
-- `analyze_defect_dataset()`: 데이터셋의 결함 종류 분석
-
-### `utils/CNN/defect_type_classifier.py`
-- `extract_defect_types_from_metadata()`: 메타데이터에서 결함 유형 추출
-- `analyze_defect_types()`: 결함 유형 분석 및 매핑 생성
-- `DefectTypeDataset`: PyTorch 데이터셋 클래스
-- `DefectTypeClassifier`: CNN 분류 모델
-- `train_defect_classifier()`: 모델 학습 함수
-- `main()`: 메인 실행 함수
-
-### `utils/CNN/test_defect_type_classifier.py`
-- `test_model()`: 모델 테스트 및 예측
-- `analyze_results()`: 결과 분석 및 통계
-- `visualize_results()`: 혼동 행렬 시각화
-
-### `utils/AprilGAN/zero_shot_defect_classifier.py`
-- `LabeledImageDataset`: 레이블된 이미지 데이터셋
-- `AprilGANGenerator`: GAN 생성자 모델
-- `AprilGANDiscriminator`: GAN 판별자 모델
-- `AprilGANZeroShotClassifier`: 제로샷 결함 분류 클래스
-- `train()`: 모델 학습 함수
-- `main()`: 메인 실행 함수

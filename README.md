@@ -469,6 +469,60 @@ LOCAL_LEARNING_RATE = 8e-05       # 로컬 학습률
 
 ---
 
+## 🔧 환경 설정
+
+### 가상 환경 활성화 (Windows PowerShell)
+
+PowerShell에서 가상 환경을 활성화할 때 실행 정책 오류가 발생할 수 있습니다. 다음 방법 중 하나를 사용하세요:
+
+#### 방법 1: 현재 세션에만 실행 정책 변경 (권장)
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+.\venv311\Scripts\Activate.ps1
+```
+
+또는 한 줄로 실행:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process; .\venv311\Scripts\Activate.ps1
+```
+
+#### 방법 2: activate.bat 사용
+
+```powershell
+cmd /c "venv311\Scripts\activate.bat && powershell"
+```
+
+#### 방법 3: Python 직접 실행 (가장 간단)
+
+가상 환경을 활성화하지 않고 직접 Python을 실행:
+```powershell
+.\venv311\Scripts\python.exe utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers
+```
+
+#### 방법 4: 영구적으로 실행 정책 변경 (관리자 권한 필요)
+
+관리자 권한으로 PowerShell을 열고:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+이후 `.\venv311\Scripts\Activate.ps1`만 실행하면 됩니다.
+
+### 가상 환경 활성화 확인
+
+가상 환경이 활성화되면 프롬프트 앞에 `(venv311)`이 표시됩니다:
+```powershell
+(venv311) PS D:\iot\FLAM>
+```
+
+Python 버전 확인:
+```powershell
+python --version
+```
+
+---
+
 ## 💻 실행 가이드
 
 ### 결함 분류 모델 학습 (권장)

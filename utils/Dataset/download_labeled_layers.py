@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
@@ -7,13 +8,17 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 from pymongo import MongoClient
 from pymongo.collection import Collection
 import gridfs
+from dotenv import load_dotenv
 
+# .env 파일에서 환경 변수 로드
+load_dotenv()
 
-DEFAULT_HOST = "keties.iptime.org"
-DEFAULT_PORT = 50002
-DEFAULT_USER = "KETI_readAnyDB"
-DEFAULT_PASSWORD = "madcoder"
-DEFAULT_AUTH_DB = "admin"
+# 환경 변수에서 값 읽기
+DEFAULT_HOST = os.getenv("MONGODB_HOST")
+DEFAULT_PORT = int(os.getenv("MONGODB_PORT", "50002"))
+DEFAULT_USER = os.getenv("MONGODB_USER")
+DEFAULT_PASSWORD = os.getenv("MONGODB_PASSWORD")
+DEFAULT_AUTH_DB = os.getenv("MONGODB_AUTH_DB", "admin")
 
 SYSTEM_DATABASES = {"admin", "local", "config"}
 

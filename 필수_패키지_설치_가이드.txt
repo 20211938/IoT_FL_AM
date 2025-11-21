@@ -13,7 +13,7 @@ PyTorch, TensorFlow 버전을 설치하는 것이 중요합니다.
 
 1.1 Python 버전 확인
 --------------------
-Python 3.8 이상이 필요합니다. (권장: Python 3.9 또는 3.10)
+Python 3.8 이상이 필요합니다. (권장: Python 3.11)
 
 명령어:
     python --version
@@ -88,35 +88,23 @@ TensorFlow GPU를 사용하려면 cuDNN이 필요합니다.
 2. CUDA 버전에 맞는 cuDNN 다운로드 및 설치
 
 ================================================================================
-3단계: Python 가상 환경 생성 및 활성화 (필수)
+3단계: Python 가상 환경 생성 (권장)
 ================================================================================
 
 가상 환경을 사용하면 프로젝트별로 패키지를 격리하여 관리할 수 있습니다.
-다른 프로젝트와의 패키지 버전 충돌을 방지하고, 깨끗한 환경을 유지할 수 있습니다.
 
 3.1 가상 환경 생성
 ------------------
-프로젝트 루트 디렉토리에서 실행:
-
 Windows:
     python -m venv venv
 
 Linux/Mac:
     python3 -m venv venv
 
-참고: venv는 가상 환경이 저장될 폴더 이름입니다. 다른 이름을 사용할 수도 있습니다.
-      예: python -m venv myenv
-
 3.2 가상 환경 활성화
 -------------------
-가상 환경을 활성화해야 패키지를 설치하고 사용할 수 있습니다.
-
 Windows (PowerShell):
     .\venv\Scripts\Activate.ps1
-    
-    만약 실행 정책 오류가 발생하면:
-    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-    위 명령어를 먼저 실행한 후 다시 활성화 시도
 
 Windows (Command Prompt):
     venv\Scripts\activate.bat
@@ -125,43 +113,6 @@ Linux/Mac:
     source venv/bin/activate
 
 가상 환경이 활성화되면 프롬프트 앞에 (venv)가 표시됩니다.
-예: (venv) PS D:\iot\FLAM>
-
-3.3 가상 환경 비활성화
----------------------
-작업이 끝나면 가상 환경을 비활성화할 수 있습니다:
-
-    deactivate
-
-3.4 가상 환경 확인
------------------
-가상 환경이 제대로 활성화되었는지 확인:
-
-Windows:
-    where python
-    (출력에 venv\Scripts\python.exe가 포함되어야 함)
-
-Linux/Mac:
-    which python
-    (출력에 venv/bin/python이 포함되어야 함)
-
-또는 Python에서 확인:
-    python -c "import sys; print(sys.executable)"
-    (출력에 venv 경로가 포함되어야 함)
-
-3.5 가상 환경 삭제 (필요시)
---------------------------
-가상 환경을 삭제하려면:
-1. 먼저 비활성화: deactivate
-2. venv 폴더를 삭제
-
-Windows:
-    rmdir /s venv
-
-Linux/Mac:
-    rm -rf venv
-
-주의: 가상 환경을 삭제하면 설치된 모든 패키지가 함께 삭제됩니다.
 
 ================================================================================
 4단계: PyTorch 설치 (CUDA 지원)
@@ -468,12 +419,10 @@ echo "========================================"
 
 □ Python 3.8 이상 설치됨
 □ NVIDIA 드라이버 설치 및 확인됨 (nvidia-smi 실행 가능)
-□ 가상 환경 생성됨 (python -m venv venv)
-□ 가상 환경 활성화됨 (프롬프트에 (venv) 표시 확인)
-□ 가상 환경이 제대로 활성화되었는지 확인됨 (where python 또는 which python)
+□ 가상 환경 생성 및 활성화됨
 □ PyTorch 설치 및 CUDA 인식 확인됨
 □ TensorFlow 설치 및 GPU 인식 확인됨
-□ 기타 필수 패키지 설치됨 (numpy, Pillow, matplotlib, tqdm, pymongo, scikit-learn)
+□ 기타 필수 패키지 설치됨 (numpy, Pillow, matplotlib, tqdm, pymongo)
 □ MongoDB 연결 정보 확인 (utils/Dataset/download_labeled_layers.py)
 
 ================================================================================

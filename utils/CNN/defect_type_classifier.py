@@ -275,6 +275,200 @@ class DefectTypeClassifier(nn.Module):
         return x
 
 
+def plot_training_history(history: Dict, save_dir: str = "checkpoints"):
+    """
+    학습 히스토리 그래프 생성 (손실 및 정확도)
+    
+    Args:
+        history: 학습 히스토리 딕셔너리 (train_loss, train_acc, val_loss, val_acc, test_loss, test_acc)
+        save_dir: 그래프 저장 디렉토리
+    """
+    if not history:
+        print("[경고] 학습 히스토리가 없습니다.")
+        return
+    
+    os.makedirs(save_dir, exist_ok=True)
+    
+    epochs = range(1, len(history['train_loss']) + 1)
+    
+    # 2개의 서브플롯: 손실 및 정확도
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    
+    # 손실 그래프
+    ax1.plot(epochs, history['train_loss'], 'b-', label='Train Loss', linewidth=2, marker='o', markersize=4)
+    ax1.plot(epochs, history['val_loss'], 'r-', label='Val Loss', linewidth=2, marker='s', markersize=4)
+    if 'test_loss' in history and history['test_loss']:
+        ax1.axhline(y=history['test_loss'][-1], color='g', linestyle='--', 
+                   label=f'Test Loss: {history["test_loss"][-1]:.4f}', linewidth=2)
+    ax1.set_xlabel('Epoch', fontsize=12)
+    ax1.set_ylabel('Loss', fontsize=12)
+    ax1.set_title('Training and Validation Loss', fontsize=14, fontweight='bold')
+    ax1.legend(fontsize=11)
+    ax1.grid(True, alpha=0.3)
+    
+    # 정확도 그래프
+    ax2.plot(epochs, history['train_acc'], 'b-', label='Train Acc', linewidth=2, marker='o', markersize=4)
+    ax2.plot(epochs, history['val_acc'], 'r-', label='Val Acc', linewidth=2, marker='s', markersize=4)
+    if 'test_acc' in history and history['test_acc']:
+        ax2.axhline(y=history['test_acc'][-1], color='g', linestyle='--', 
+                   label=f'Test Acc: {history["test_acc"][-1]:.2f}%', linewidth=2)
+    ax2.set_xlabel('Epoch', fontsize=12)
+    ax2.set_ylabel('Accuracy (%)', fontsize=12)
+    ax2.set_title('Training and Validation Accuracy', fontsize=14, fontweight='bold')
+    ax2.legend(fontsize=11)
+    ax2.grid(True, alpha=0.3)
+    ax2.set_ylim([0, 105])
+    
+    plt.tight_layout()
+    
+    save_path = os.path.join(save_dir, "training_history.png")
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    print(f"\n[학습 히스토리 그래프]")
+    print(f"  - 저장 경로: {save_path}")
+    print(f"  - 총 에포크: {len(epochs)}")
+
+
+def visualize_sample_predictions(model, dataloader, idx_to_name: Dict, device, 
+                                num_samples: int = 3, save_dir: str = "checkpoints"):
+    """
+    실제 예측 결과를 이미지와 함께 표로 시각화 (3개 샘플)
+    
+    Args:
+        model: 학습된 모델
+        dataloader: 테스트 데이터로더
+        idx_to_name: 인덱스 -> 클래스 이름 매핑
+        device: 사용할 디바이스 (cuda/cpu)
+        num_samples: 표시할 샘플 수
+        save_dir: 결과 저장 디렉토리
+    """
+    model.eval()
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # 이미지 복원용 transform (정규화 해제)
+    def denormalize(tensor):
+        """ImageNet 정규화 해제"""
+        mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+        std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+        return tensor * std + mean
+    
+    samples_collected = []
+    
+    with torch.no_grad():
+        for images, labels, defect_types_list, paths in dataloader:
+            images = images.to(device)
+            labels = labels.to(device)
+            
+            outputs = model(images)
+            probs = torch.sigmoid(outputs.data)
+            predicted = (probs > 0.5).float()
+            
+            # 배치에서 샘플 수집
+            for i in range(len(images)):
+                if len(samples_collected) >= num_samples:
+                    break
+                
+                # 예측된 클래스들
+                pred_classes = [idx_to_name[j] for j in range(len(predicted[i])) 
+                              if predicted[i][j] == 1.0]
+                # 실제 클래스들
+                true_classes = [idx_to_name[j] for j in range(len(labels[i])) 
+                              if labels[i][j] == 1.0]
+                
+                # 확률 점수
+                pred_probs = {idx_to_name[j]: probs[i][j].item() 
+                            for j in range(len(probs[i]))}
+                
+                # 이미지 복원
+                img_tensor = denormalize(images[i].cpu())
+                img_array = img_tensor.permute(1, 2, 0).numpy()
+                img_array = np.clip(img_array, 0, 1)
+                
+                samples_collected.append({
+                    'image': img_array,
+                    'path': paths[i],
+                    'true_classes': true_classes if true_classes else ['Normal'],
+                    'pred_classes': pred_classes if pred_classes else ['Normal'],
+                    'pred_probs': pred_probs,
+                    'is_correct': (predicted[i] == labels[i]).all().item()
+                })
+            
+            if len(samples_collected) >= num_samples:
+                break
+    
+    if not samples_collected:
+        print("[경고] 시각화할 샘플이 없습니다.")
+        return
+    
+    # 표 생성: 각 샘플마다 이미지와 정보 표시
+    num_cols = 4  # 이미지, 실제 레이블, 예측 레이블, 확률
+    num_rows = num_samples
+    
+    fig = plt.figure(figsize=(20, 5 * num_samples))
+    gs = fig.add_gridspec(num_rows, num_cols, hspace=0.3, wspace=0.3)
+    
+    for row, sample in enumerate(samples_collected):
+        # 이미지
+        ax_img = fig.add_subplot(gs[row, 0])
+        ax_img.imshow(sample['image'])
+        ax_img.set_title(f"Sample {row+1}\n{Path(sample['path']).name}", fontsize=12, fontweight='bold')
+        ax_img.axis('off')
+        
+        # 실제 레이블
+        ax_true = fig.add_subplot(gs[row, 1])
+        ax_true.axis('off')
+        true_text = "실제 레이블:\n" + "\n".join([f"  • {cls}" for cls in sample['true_classes']])
+        ax_true.text(0.1, 0.5, true_text, fontsize=11, verticalalignment='center',
+                    family='monospace', bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.5))
+        ax_true.set_title("True Labels", fontsize=12, fontweight='bold')
+        
+        # 예측 레이블
+        ax_pred = fig.add_subplot(gs[row, 2])
+        ax_pred.axis('off')
+        correct_mark = "✓ 정확" if sample['is_correct'] else "✗ 오류"
+        pred_text = f"예측 레이블 ({correct_mark}):\n" + "\n".join([f"  • {cls}" for cls in sample['pred_classes']])
+        color = 'lightgreen' if sample['is_correct'] else 'lightcoral'
+        ax_pred.text(0.1, 0.5, pred_text, fontsize=11, verticalalignment='center',
+                    family='monospace', bbox=dict(boxstyle='round', facecolor=color, alpha=0.5))
+        ax_pred.set_title("Predicted Labels", fontsize=12, fontweight='bold')
+        
+        # 확률 점수 (상위 5개)
+        ax_probs = fig.add_subplot(gs[row, 3])
+        ax_probs.axis('off')
+        sorted_probs = sorted(sample['pred_probs'].items(), key=lambda x: x[1], reverse=True)[:5]
+        prob_text = "확률 점수 (상위 5개):\n"
+        for cls, prob in sorted_probs:
+            is_predicted = cls in sample['pred_classes']
+            marker = "→" if is_predicted else "  "
+            prob_text += f"  {marker} {cls:30s}: {prob*100:5.2f}%\n"
+        ax_probs.text(0.05, 0.5, prob_text, fontsize=10, verticalalignment='center',
+                     family='monospace', bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
+        ax_probs.set_title("Prediction Probabilities", fontsize=12, fontweight='bold')
+    
+    save_path = os.path.join(save_dir, "sample_predictions.png")
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    print(f"\n[샘플 예측 결과]")
+    print(f"  - 저장 경로: {save_path}")
+    print(f"  - 표시된 샘플 수: {len(samples_collected)}")
+    
+    # 콘솔에도 표로 출력
+    print("\n" + "=" * 100)
+    print("실제 예측 결과 표")
+    print("=" * 100)
+    print(f"{'번호':<6} {'이미지 파일명':<40} {'실제 레이블':<30} {'예측 레이블':<30} {'정확도':<10}")
+    print("-" * 100)
+    for i, sample in enumerate(samples_collected):
+        filename = Path(sample['path']).name
+        true_str = ", ".join(sample['true_classes'])
+        pred_str = ", ".join(sample['pred_classes'])
+        correct_str = "✓ 정확" if sample['is_correct'] else "✗ 오류"
+        print(f"{i+1:<6} {filename:<40} {true_str:<30} {pred_str:<30} {correct_str:<10}")
+    print("=" * 100)
+
+
 def analyze_defect_types(data_dir: str, min_count: int = 10) -> Dict[str, int]:
     """
     데이터셋에서 결함 유형을 분석하고 매핑 생성
@@ -831,6 +1025,21 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
         if epoch > 0:
             avg_epoch_time = elapsed_time / (epoch + 1)
             print(f"  - 에포크당 평균 시간: {avg_epoch_time:.2f}초")
+        
+        # 학습 히스토리 그래프 생성
+        try:
+            plot_training_history(history, checkpoint_dir)
+            print(f"  - 학습 히스토리 그래프 저장 완료: {checkpoint_dir}/training_history.png")
+        except Exception as e:
+            print(f"  - 학습 히스토리 그래프 생성 실패: {e}")
+        
+        # 실제 예측 결과 시각화 (3개 샘플)
+        try:
+            visualize_sample_predictions(model, test_loader, idx_to_name, device, 
+                                       num_samples=3, save_dir=checkpoint_dir)
+            print(f"  - 샘플 예측 결과 저장 완료: {checkpoint_dir}/sample_predictions.png")
+        except Exception as e:
+            print(f"  - 샘플 예측 결과 생성 실패: {e}")
         
         if log_file_path:
             print("=" * 80)

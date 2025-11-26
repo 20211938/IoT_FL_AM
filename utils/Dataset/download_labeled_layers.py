@@ -56,7 +56,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("data") / "labeled_layers",
+        default=Path("data"),
         help="Directory to save downloaded layers.",
     )
     parser.add_argument(
@@ -74,20 +74,16 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Overwrite files that already exist in the output folder.",
     )
     parser.add_argument(
-        "--limit",
-        type=int,
-        help="Maximum number of labeled layers to download per database.",
-    )
-    parser.add_argument(
-        "--total-limit",
-        type=int,
-        default=10000,
-        help="Maximum total number of labeled layers to download across all databases (default: 10000).",
-    )
-    parser.add_argument(
         "--metadata",
         action="store_true",
-        help="Persist document metadata alongside each downloaded image.",
+        default=True,
+        help="Persist document metadata alongside each downloaded image (default: True).",
+    )
+    parser.add_argument(
+        "--no-metadata",
+        dest="metadata",
+        action="store_false",
+        help="Do not save metadata JSON files.",
     )
     parser.add_argument(
         "--dry-run",
@@ -133,7 +129,24 @@ def resolve_databases(client: MongoClient, args: argparse.Namespace) -> List[str
         pattern = re.compile(args.match)
         db_names = [name for name in db_names if pattern.search(name)]
 
-    return sorted(db_names)
+    # 날짜 형식의 데이터베이스 이름을 연도 기준으로 내림차순 정렬 (2025, 2024, ...)
+    def extract_year(db_name: str) -> int:
+        """데이터베이스 이름에서 연도를 추출. 연도가 없으면 0 반환"""
+        import re
+        # 문자열이 숫자로 시작하는 경우 처음 4자리를 연도로 간주 (예: 20210914 -> 2021)
+        if db_name and db_name[0].isdigit():
+            # 처음 4자리가 20xx 형식인지 확인
+            if len(db_name) >= 4 and db_name[:2] == '20' and db_name[2:4].isdigit():
+                return int(db_name[:4])
+        
+        # 다른 위치에서 연도 패턴 찾기 (예: 2025, 2024)
+        match = re.search(r'(20\d{2})', db_name)
+        if match:
+            return int(match.group(1))
+        return 0
+    
+    # 연도 기준으로 내림차순 정렬 (최신 연도 먼저: 2025, 2024, 2023, ...)
+    return sorted(db_names, key=extract_year, reverse=True)
 
 
 def ensure_collections(db, db_name: str) -> Optional[gridfs.GridFS]:
@@ -196,13 +209,10 @@ def download_for_db(
     fs: gridfs.GridFS,
     output_dir: Path,
     overwrite: bool,
-    limit: Optional[int],
     persist_metadata: bool,
     dry_run: bool,
     debug: bool = False,
-    total_downloaded: int = 0,
-    total_limit: Optional[int] = None,
-) -> Tuple[DownloadResult, int]:
+) -> DownloadResult:
     result = DownloadResult()
     collection: Collection = db["LayersModelDB"]
 
@@ -222,50 +232,34 @@ def download_for_db(
             print(f"[DEBUG] Sample GridFS file metadata: {sample_file.metadata}")
         else:
             print(f"[DEBUG] No files found in GridFS")
-        
-        # Count total GridFS files
-        try:
-            total_files = len(list(fs.find().limit(10000)))  # Limit to avoid memory issues
-            print(f"[DEBUG] Total GridFS files (sampled): {total_files}")
-        except Exception as e:
-            print(f"[DEBUG] Could not count GridFS files: {e}")
-
-    # 전체 제한이 있는 경우, 남은 개수만큼만 다운로드
-    remaining_limit = None
-    if total_limit is not None:
-        remaining_limit = max(0, total_limit - total_downloaded)
-        if remaining_limit == 0:
-            print(f"[{db_name}] Total limit reached. Skipping this database.")
-            return result, total_downloaded
     
-    # 데이터베이스별 제한과 전체 제한 중 작은 값 사용
-    effective_limit = limit
-    if remaining_limit is not None:
-        if effective_limit is None:
-            effective_limit = remaining_limit
-        else:
-            effective_limit = min(effective_limit, remaining_limit)
+    # 비어있는 컬렉션 확인 (빠른 체크)
+    sample_count = collection.count_documents(truthy_filter(), limit=1)
+    if sample_count == 0:
+        print(f"[{db_name}] No labeled layers found. Skipping.")
+        return result
     
-    cursor = (
-        collection.find(truthy_filter(), sort=[("LayerNum", 1)])
-        if effective_limit is None
-        else collection.find(truthy_filter(), sort=[("LayerNum", 1)]).limit(effective_limit)
-    )
-
+    cursor = collection.find(truthy_filter(), sort=[("LayerNum", 1)])
+    
     for doc in cursor:
-        # 전체 제한 체크
-        if total_limit is not None and total_downloaded >= total_limit:
-            print(f"[{db_name}] Total limit ({total_limit}) reached. Stopping download.")
-            break
         layer_num = doc.get("LayerNum")
         layer_idx = doc.get("LayerIdx")
         extension = doc.get("Extension", "jpg").lstrip(".")
         filename = doc_to_filename(db_name, layer_num, doc.get("_id"), extension)
-        target_path = output_dir / db_name / filename
+        target_path = output_dir / filename
 
         if dry_run:
             print(f"[DRY-RUN] Would download {db_name}:{layer_num} -> {target_path}")
             continue
+
+        # 파일 존재 확인을 먼저 수행 (GridFS 쿼리 전에)
+        # 이미 존재하는 파일은 GridFS 쿼리를 건너뛰어 성능 향상
+        if target_path.exists() and not overwrite:
+            result.skipped_existing += 1
+            # 출력 최소화 (1000개마다만 출력)
+            if result.skipped_existing % 1000 == 0:
+                print(f"[{db_name}] Skipped {result.skipped_existing} existing files...")
+            continue  # GridFS 쿼리 건너뛰기
 
         file_id = None
         
@@ -308,11 +302,7 @@ def download_for_db(
                 file_id = grid_file._id
 
         if file_id is None:
-            # Only print first few missing layers to avoid spam
-            if len(result.missing_layers) < 5:
-                print(f"[{db_name}] Missing layer data for LayerNum={layer_num}, LayerIdx={layer_idx}")
-            elif len(result.missing_layers) == 5:
-                print(f"[{db_name}] ... (suppressing further missing layer messages)")
+            # Missing layers는 조용히 기록만 (출력 최소화)
             result.missing_layers.append(layer_num)
             result.missing_layers_with_docs.append(str(doc.get("_id")))
             continue
@@ -321,15 +311,15 @@ def download_for_db(
         saved = write_bytes(target_path, content, overwrite)
         if saved:
             result.downloaded += 1
-            total_downloaded += 1
-            print(f"[{db_name}] Saved {target_path} ({total_downloaded}/{total_limit if total_limit else 'unlimited'})")
+            # 출력 빈도 줄이기 (100개마다만 출력)
+            if result.downloaded % 100 == 0:
+                print(f"[{db_name}] Downloaded {result.downloaded} files...")
             if persist_metadata:
                 write_metadata(target_path, doc)
         else:
             result.skipped_existing += 1
-            print(f"[{db_name}] Skipped existing {target_path}")
 
-    return result, total_downloaded
+    return result
 
 
 def main(argv: Optional[Sequence[str]] = None) -> None:
@@ -344,52 +334,42 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         print("No databases matched criteria. Nothing to do.")
         return
 
-    print(f"Processing {len(db_names)} database(s): {', '.join(db_names)}")
-    print(f"Total download limit: {args.total_limit}")
+    print(f"Processing {len(db_names)} database(s): {', '.join(db_names)}\n")
+    
     total = DownloadResult()
-    total_downloaded = 0
 
     for db_name in db_names:
-        print(f"\n==> Database: {db_name}")
+        print(f"==> Database: {db_name}")
         db = client[db_name]
         fs = ensure_collections(db, db_name)
         if not fs:
             continue
 
-        result, total_downloaded = download_for_db(
+        result = download_for_db(
             db_name=db_name,
             db=db,
             fs=fs,
             output_dir=output_dir,
             overwrite=args.overwrite,
-            limit=args.limit,
             persist_metadata=args.metadata,
             dry_run=args.dry_run,
             debug=args.debug,
-            total_downloaded=total_downloaded,
-            total_limit=args.total_limit,
         )
         total.extend(result)
         
-        # 전체 제한에 도달했으면 중단
-        if args.total_limit is not None and total_downloaded >= args.total_limit:
-            print(f"\nTotal limit ({args.total_limit}) reached. Stopping download.")
-            break
+        # 진행 상황 출력
+        if result.downloaded > 0 or result.skipped_existing > 0:
+            print(f"[{db_name}] 완료: 다운로드 {result.downloaded}개, 건너뜀 {result.skipped_existing}개\n")
 
-    print("\n" + "=" * 60)
+    print("=" * 60)
     print("Download Summary")
     print("=" * 60)
     print(f"Downloaded: {total.downloaded}")
     print(f"Skipped existing: {total.skipped_existing}")
-    print(f"Total downloaded: {total_downloaded}")
     if total.missing_layers:
         print(f"Missing layers: {len(total.missing_layers)}")
-        if len(total.missing_layers) <= 10:
-            print("Layer numbers:", total.missing_layers)
     if total.missing_layers_with_docs:
-        print(
-            f"Docs without GridFS data: {len(total.missing_layers_with_docs)}"
-        )
+        print(f"Docs without GridFS data: {len(total.missing_layers_with_docs)}")
 
 
 if __name__ == "__main__":

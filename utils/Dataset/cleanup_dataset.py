@@ -1,6 +1,8 @@
 """
 데이터셋 정리 및 삭제 스크립트
-소수 클래스 및 의미 없는 이름을 가진 결함 유형 데이터를 삭제합니다.
+- TagBoxes가 2개 이상인 항목 삭제
+- Comment 분포 상위 7개만 유지, 나머지 삭제
+- "Laser capture timing error", "Recoater capture timing error" 삭제
 """
 
 import argparse
@@ -8,213 +10,219 @@ import json
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 
 
-def extract_defect_types_from_metadata(metadata: dict) -> List[str]:
-    """JSON 메타데이터에서 결함 유형 추출"""
-    defect_types = []
+def normalize_comment(comment: str) -> str:
+    """
+    Comment 문자열 정규화:
+    - 공백 정규화 (여러 공백을 하나로, 앞뒤 공백 제거)
+    - 일반적인 오타 수정
+    """
+    if not comment:
+        return '(빈 값)'
     
-    # TagBoxes에서 결함 정보 추출
-    if 'DepositionImageModel' in metadata:
-        tag_boxes = metadata['DepositionImageModel'].get('TagBoxes', [])
-        for tag in tag_boxes:
-            name = tag.get('Name', '').strip()
-            comment = tag.get('Comment', '').strip()
-            if name:
-                defect_type = comment if comment else name
-                if defect_type and defect_type not in defect_types:
-                    defect_types.append(defect_type)
+    # 문자열로 변환하고 앞뒤 공백 제거
+    normalized = str(comment).strip()
     
-    if 'ScanningImageModel' in metadata:
-        tag_boxes = metadata['ScanningImageModel'].get('TagBoxes', [])
-        for tag in tag_boxes:
-            name = tag.get('Name', '').strip()
-            comment = tag.get('Comment', '').strip()
-            if name:
-                defect_type = comment if comment else name
-                if defect_type and defect_type not in defect_types:
-                    defect_types.append(defect_type)
+    # 여러 공백을 하나로 통일
+    normalized = re.sub(r'\s+', ' ', normalized)
     
-    return defect_types if defect_types else ["Normal"]
-
-
-def is_meaningless_name(name: str) -> bool:
-    """의미 없는 이름인지 확인 (숫자만 있거나 너무 짧은 경우)"""
-    if not name or len(name.strip()) == 0:
-        return True
+    # 일반적인 오타 수정
+    # "Reocater" -> "Recoater" (오타 수정)
+    normalized = re.sub(r'\bReocater\b', 'Recoater', normalized, flags=re.IGNORECASE)
     
-    # 숫자만 있는 경우 (예: "3", "123")
-    if re.match(r'^\d+$', name.strip()):
-        return True
-    
-    # 너무 짧은 경우 (1-2자)
-    if len(name.strip()) <= 2:
-        return True
-    
-    # D1, D2 같은 패턴도 의미 없는 것으로 간주
-    if re.match(r'^D\d+$', name.strip(), re.IGNORECASE):
-        return True
-    
-    return False
+    return normalized
 
 
 def cleanup_dataset(
-    output_dir: Path,
-    min_ratio: float = 0.01,
-    min_count: Optional[int] = None,
+    data_dir: Path,
     dry_run: bool = False,
     verbose: bool = True,
+    top_n_comments: int = 7,
 ) -> Dict[str, int]:
     """
-    다운로드된 데이터셋에서 소수 클래스 및 의미 없는 이름 제거
+    데이터셋 정리:
+    - TagBoxes가 2개 이상인 항목 삭제
+    - Comment 분포 상위 N개만 유지, 나머지 삭제
+    - "Laser capture timing error", "Recoater capture timing error" 삭제
     
     Args:
-        output_dir: 데이터 디렉토리 경로
-        min_ratio: 최소 비율 (0.0-1.0). 이 비율 미만인 결함 유형은 삭제됨
-        min_count: 최소 샘플 수. 이 값이 지정되면 min_ratio 대신 사용됨
+        data_dir: 데이터 디렉토리 경로
         dry_run: True이면 실제 삭제하지 않고 미리보기만 수행
         verbose: True이면 상세한 진행 상황 출력
+        top_n_comments: 유지할 상위 Comment 개수 (기본값: 7)
     
     Returns:
-        정리 통계 딕셔너리 (total_files, deleted_files, removed_classes 등)
+        정리 통계 딕셔너리
     """
     if verbose:
         print("\n" + "=" * 60)
         print("데이터셋 정리 시작")
         print("=" * 60)
-        
         print(f"\n[정리 기준]")
-        if min_count is not None:
-            print(f"  - 최소 샘플 수: {min_count}개")
-        else:
-            print(f"  - 최소 비율: {min_ratio*100:.2f}%")
-        print(f"  - 의미 없는 이름 제거: 숫자만, D1/D2 패턴, 2자 이하")
+        print(f"  - TagBoxes가 2개 이상인 항목 삭제")
+        print(f"  - Comment 분포 상위 {top_n_comments}개만 유지, 나머지 삭제")
+        print(f"  - 'Laser capture timing error' 삭제")
+        print(f"  - 'Recoater capture timing error' 삭제")
         print(f"  - 모드: {'DRY RUN' if dry_run else '실제 삭제'}")
     
-    # 1단계: 결함 유형 통계 수집
-    if verbose:
-        print(f"\n[1단계] 결함 유형 통계 수집 중...")
-    defect_type_counts = Counter()
-    files_with_defect_types = {}  # 파일 경로 -> 결함 유형 리스트
-    
-    data_path = Path(output_dir)
+    data_path = Path(data_dir)
     if not data_path.exists():
         if verbose:
-            print(f"[오류] 데이터 디렉토리가 없습니다: {output_dir}")
+            print(f"[오류] 데이터 디렉토리가 없습니다: {data_dir}")
         return {}
     
+    # 1단계: Comment 분포 분석
+    if verbose:
+        print(f"\n[1단계] Comment 분포 분석 중...")
+    comment_counts = Counter()
+    file_metadata_info = {}  # 파일 경로 -> (tagbox_count, comments 리스트)
+    
     total_files = 0
-    for db_dir in data_path.iterdir():
-        if not db_dir.is_dir():
+    for img_file in data_path.glob("*.jpg"):
+        json_file = img_file.with_suffix(".jpg.json")
+        if not json_file.exists():
             continue
         
-        for img_file in db_dir.glob("*.jpg"):
-            json_file = img_file.with_suffix(".jpg.json")
-            if not json_file.exists():
-                continue
+        total_files += 1
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
             
-            total_files += 1
-            try:
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    metadata = json.load(f)
-                
-                defect_types = extract_defect_types_from_metadata(metadata)
-                files_with_defect_types[str(img_file)] = defect_types
-                
-                for defect_type in defect_types:
-                    defect_type_counts[defect_type] += 1
-            except Exception as e:
-                if verbose:
-                    print(f"  [경고] 파일 읽기 실패: {img_file.name} - {e}")
-                continue
+            # DepositionImageModel의 TagBoxes 확인
+            deposition_model = metadata.get('DepositionImageModel', {})
+            tag_boxes = deposition_model.get('TagBoxes', [])
+            tagbox_count = len(tag_boxes)
+            
+            # Comment 수집 및 정규화
+            comments = []
+            for tag_box in tag_boxes:
+                comment = tag_box.get('Comment', '')
+                comment_str = normalize_comment(comment)
+                comments.append(comment_str)
+                comment_counts[comment_str] += 1
+            
+            file_metadata_info[str(img_file)] = {
+                'image': img_file,
+                'json': json_file,
+                'tagbox_count': tagbox_count,
+                'comments': comments,
+                'metadata': metadata
+            }
+        except Exception as e:
+            if verbose:
+                print(f"  [경고] 파일 읽기 실패: {img_file.name} - {e}")
+            continue
     
     if verbose:
         print(f"  - 검사한 파일 수: {total_files}")
-        print(f"  - 발견된 결함 유형 수: {len(defect_type_counts)}")
+        print(f"  - 발견된 Comment 종류 수: {len(comment_counts)}")
     
     if total_files == 0:
         if verbose:
             print("\n[결과] 처리할 파일이 없습니다.")
-        return {'total_files': 0, 'deleted_files': 0, 'removed_classes': 0}
+        return {'total_files': 0, 'deleted_files': 0}
     
-    # 2단계: 삭제 대상 결정
-    if verbose:
-        print(f"\n[2단계] 삭제 대상 결정 중...")
+    # 상위 N개 Comment 결정
+    sorted_comments = sorted(comment_counts.items(), key=lambda x: x[1], reverse=True)
+    top_comments = set([comment for comment, _ in sorted_comments[:top_n_comments]])
     
-    # 비율 또는 개수 기반 필터링
-    if min_count is not None:
-        threshold_count = min_count
-    else:
-        threshold_count = max(1, int(total_files * min_ratio))
-    
-    minor_classes = set()
-    for defect_type, count in defect_type_counts.items():
-        if count < threshold_count and defect_type != "Normal":
-            minor_classes.add(defect_type)
-            if verbose:
-                print(f"  - 소수 클래스: {defect_type} ({count}개, {count/total_files*100:.2f}%)")
-    
-    # 의미 없는 이름 필터링
-    meaningless_classes = set()
-    for defect_type in defect_type_counts.keys():
-        if is_meaningless_name(defect_type) and defect_type != "Normal":
-            meaningless_classes.add(defect_type)
-            count = defect_type_counts[defect_type]
-            if verbose:
-                print(f"  - 의미 없는 이름: {defect_type} ({count}개)")
-    
-    # 삭제 대상 통합
-    classes_to_remove = minor_classes | meaningless_classes
-    
-    if not classes_to_remove:
-        if verbose:
-            print(f"\n[결과] 삭제할 클래스가 없습니다.")
-        return {
-            'total_files': total_files,
-            'deleted_files': 0,
-            'removed_classes': 0
-        }
+    # 삭제할 특정 Comment 목록
+    comments_to_remove = {
+        normalize_comment("Laser capture timing error"),
+        normalize_comment("Recoater capture timing error"),
+    }
     
     if verbose:
-        print(f"\n[삭제 대상 클래스] 총 {len(classes_to_remove)}개")
-        for cls in sorted(classes_to_remove):
-            count = defect_type_counts[cls]
-            reason = []
-            if cls in minor_classes:
-                reason.append("소수")
-            if cls in meaningless_classes:
-                reason.append("의미없음")
-            print(f"  - {cls}: {count}개 ({', '.join(reason)})")
+        print(f"\n[유지할 상위 {top_n_comments}개 Comment]")
+        for idx, (comment, count) in enumerate(sorted_comments[:top_n_comments], 1):
+            percentage = count / total_files * 100 if total_files > 0 else 0
+            comment_display = comment[:50] + "..." if len(comment) > 50 else comment
+            print(f"  {idx}. {comment_display}: {count}개 ({percentage:.2f}%)")
+        
+        # 삭제할 특정 Comment 확인
+        found_remove_comments = []
+        for comment in comments_to_remove:
+            if comment in comment_counts:
+                found_remove_comments.append((comment, comment_counts[comment]))
+        
+        if found_remove_comments:
+            print(f"\n[삭제할 특정 Comment]")
+            for comment, count in found_remove_comments:
+                percentage = count / total_files * 100 if total_files > 0 else 0
+                print(f"  - {comment}: {count}개 ({percentage:.2f}%)")
     
-    # 3단계: 삭제 대상 파일 찾기
+    # 2단계: 삭제 대상 파일 찾기
     if verbose:
-        print(f"\n[3단계] 삭제 대상 파일 찾는 중...")
+        print(f"\n[2단계] 삭제 대상 파일 찾는 중...")
     files_to_remove = []
     
-    for img_path_str, defect_types in files_with_defect_types.items():
-        img_path = Path(img_path_str)
-        json_path = img_path.with_suffix(".jpg.json")
+    for img_path_str, info in file_metadata_info.items():
+        should_remove = False
+        reasons = []
         
-        # 삭제 대상 클래스가 포함되어 있는지 확인
-        has_removable_class = any(dt in classes_to_remove for dt in defect_types)
+        # 조건 1: TagBoxes가 2개 이상인 경우
+        if info['tagbox_count'] >= 2:
+            should_remove = True
+            reasons.append(f"TagBoxes {info['tagbox_count']}개")
         
-        if has_removable_class:
-            matched_classes = [dt for dt in defect_types if dt in classes_to_remove]
+        # 조건 2: Comment가 상위 N개에 없는 경우
+        # TagBoxes가 있는 경우에만 Comment 체크
+        if info['tagbox_count'] > 0:
+            has_valid_comment = False
+            has_remove_comment = False
+            
+            for comment in info['comments']:
+                # 특정 삭제 대상 Comment 확인
+                if comment in comments_to_remove:
+                    has_remove_comment = True
+                    reasons.append(f"삭제 대상 Comment: {comment}")
+                    break
+                # 상위 Comment 확인
+                if comment in top_comments:
+                    has_valid_comment = True
+            
+            # 특정 삭제 대상 Comment가 있으면 삭제
+            if has_remove_comment:
+                should_remove = True
+            # 특정 삭제 대상이 없고 상위 Comment에도 없으면 삭제
+            elif not has_valid_comment:
+                should_remove = True
+                reasons.append("상위 Comment에 없음")
+        
+        if should_remove:
             files_to_remove.append({
-                'image': img_path,
-                'json': json_path,
-                'defect_types': defect_types,
-                'matched_classes': matched_classes
+                'image': info['image'],
+                'json': info['json'],
+                'reasons': reasons,
+                'tagbox_count': info['tagbox_count'],
+                'comments': info['comments']
             })
     
     if verbose:
         print(f"  - 삭제 대상 파일 수: {len(files_to_remove)}개")
+        
+        # 삭제 사유별 통계
+        reason_stats = Counter()
+        tagbox_count_stats = Counter()
+        for item in files_to_remove:
+            for reason in item['reasons']:
+                reason_stats[reason] += 1
+            tagbox_count_stats[item['tagbox_count']] += 1
+        
+        print(f"\n[삭제 사유별 통계]")
+        for reason, count in reason_stats.most_common():
+            print(f"  - {reason}: {count}개")
+        
+        print(f"\n[TagBoxes 개수별 삭제 통계]")
+        for count, num_files in sorted(tagbox_count_stats.items()):
+            print(f"  - {count}개: {num_files}개 파일")
     
-    # 4단계: 실제 삭제
+    # 3단계: 실제 삭제
     if not dry_run:
         if verbose:
-            print(f"\n[4단계] 파일 삭제 중...")
+            print(f"\n[3단계] 파일 삭제 중...")
         deleted_count = 0
         error_count = 0
         
@@ -246,34 +254,27 @@ def cleanup_dataset(
     return {
         'total_files': total_files,
         'deleted_files': len(files_to_remove) if not dry_run else 0,
-        'removed_classes': len(classes_to_remove),
-        'classes_to_remove': list(classes_to_remove),
-        'defect_type_counts': dict(defect_type_counts)
+        'top_comments': list(top_comments),
+        'comment_counts': dict(comment_counts)
     }
 
 
 def main():
     """메인 함수 - CLI 인터페이스"""
     parser = argparse.ArgumentParser(
-        description="데이터셋에서 소수 클래스 및 의미 없는 이름을 가진 결함 유형 데이터 삭제"
+        description="데이터셋 정리: TagBoxes 2개 이상 삭제, Comment 상위 7개만 유지"
     )
     parser.add_argument(
         '--data-dir',
         type=Path,
-        default=Path('data') / 'labeled_layers',
-        help='데이터 디렉토리 경로 (기본값: data/labeled_layers)'
+        default=Path('data'),
+        help='데이터 디렉토리 경로 (기본값: data)'
     )
     parser.add_argument(
-        '--min-ratio',
-        type=float,
-        default=0.01,
-        help='최소 비율 (0.0-1.0). 이 비율 미만인 결함 유형은 삭제됨 (기본값: 0.01 = 1%%)'
-    )
-    parser.add_argument(
-        '--min-count',
+        '--top-n',
         type=int,
-        default=None,
-        help='최소 샘플 수. 이 값이 지정되면 min-ratio 대신 사용됨'
+        default=7,
+        help='유지할 상위 Comment 개수 (기본값: 7)'
     )
     parser.add_argument(
         '--dry-run',
@@ -289,11 +290,10 @@ def main():
     args = parser.parse_args()
     
     stats = cleanup_dataset(
-        output_dir=args.data_dir,
-        min_ratio=args.min_ratio,
-        min_count=args.min_count,
+        data_dir=args.data_dir,
         dry_run=args.dry_run,
         verbose=not args.quiet,
+        top_n_comments=args.top_n,
     )
     
     if not args.quiet:
@@ -302,7 +302,6 @@ def main():
         print("=" * 60)
         print(f"전체 파일: {stats.get('total_files', 0)}개")
         print(f"삭제된 파일: {stats.get('deleted_files', 0)}개")
-        print(f"제거된 클래스: {stats.get('removed_classes', 0)}개")
 
 
 if __name__ == "__main__":

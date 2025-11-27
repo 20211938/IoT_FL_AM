@@ -35,11 +35,7 @@ def create_dataset(clientIdentifierDict, imagePath0, imagePath1, npyPath, tileSi
                 splitImages, splitSegmentationMask = preprocess_image(im0, im1,
                                                                       segmentationMask,
                                                                       tileSize)
-                if fileName == '0000216':
-                    # Don't keep tiles from the bottom half of the figure (unlabeled)
-                    idxToKeep = [i + j for i in np.arange(0, 324, 18) for j in range(9)]
-                    splitImages = tf.gather(splitImages, idxToKeep)
-                    splitSegmentationMask = tf.gather(splitSegmentationMask, idxToKeep)
+      
                 
                 if fileNum == 0:
                     clientImages, clientMasks = splitImages, splitSegmentationMask
@@ -114,11 +110,7 @@ def load_and_preprocess_file(fileName, imagePath0, imagePath1, npyPath, tileSize
                                                               segmentationMask,
                                                               tileSize)
         
-        if fileName == '0000216':
-            # Don't keep tiles from the bottom half of the figure (unlabeled)
-            idxToKeep = [i + j for i in np.arange(0, 324, 18) for j in range(9)]
-            splitImages = tf.gather(splitImages, idxToKeep)
-            splitSegmentationMask = tf.gather(splitSegmentationMask, idxToKeep)
+
         
         return splitImages, splitSegmentationMask
     except Exception as e:
@@ -199,10 +191,7 @@ def get_dataset_size(fileList, imagePath0, imagePath1, npyPath, tileSize):
             rightcrop = im0.size[0] // tileSize * tileSize
             bottomcrop = im0.size[1] // tileSize * tileSize
             n_tiles = (rightcrop // tileSize) * (bottomcrop // tileSize)
-            
-            if fileName == '0000216':
-                # Special case: only keep top half
-                n_tiles = 162  # 9 tiles per row * 18 rows
+    
             
             total_tiles += n_tiles
         except Exception as e:

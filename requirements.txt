@@ -2,4 +2,9 @@ numpy
 Pillow
 matplotlib
 tensorflow
-pickle
+pymongo
+torch
+torchvision
+tqdm
+scikit-learn
+python-dotenv

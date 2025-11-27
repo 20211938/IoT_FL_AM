@@ -13,41 +13,13 @@ def federated_averaging(model,
     Performs local and server updates.
     Comments and print statements are self-explanatory.
     
-    Supports both tensor-based data and tf.data.Dataset for lazy loading.
-    
     '''
     
     lossDict, testLoss = dict.fromkeys(clientIDs, np.array([])), []
     accuracyDict, testAccuracy = dict.fromkeys(clientIDs, np.array([])), []
     
-    # Check if using lazy loading (tf.data.Dataset) or pre-loaded tensors
-    use_lazy_loading = isinstance(imageDict[clientIDs[0]], tf.data.Dataset)
-    
-    if use_lazy_loading:
-        # For lazy loading, dataset sizes should be passed separately
-        # Check if segMaskDict contains dataset sizes instead of masks
-        if isinstance(segMaskDict[clientIDs[0]], (int, np.integer)):
-            # segMaskDict contains dataset sizes
-            nk = [segMaskDict[clientID] for clientID in clientIDs]
-        else:
-            # Fallback: try to get from a separate size dictionary
-            # If not available, we'll need to calculate (not ideal)
-            nk = []
-            for clientID in clientIDs:
-                # Try to get size from dataset if it has cardinality
-                try:
-                    size = tf.data.experimental.cardinality(imageDict[clientID]).numpy()
-                    if size != tf.data.experimental.UNKNOWN_CARDINALITY:
-                        nk.append(int(size * LOCAL_BATCH_SIZE))
-                    else:
-                        raise ValueError("Unknown dataset cardinality")
-                except:
-                    # Fallback: estimate or raise error
-                    raise ValueError(f"Dataset size for {clientID} is unknown. Please provide dataset sizes in segMaskDict.")
-    else:
-        # Get the number of points in each client (for pre-loaded tensors)
-        nk = [len(segMaskDict[clientID]) for clientID in clientIDs]
-    
+    # Get the number of points in each client
+    nk = [len(segMaskDict[clientID]) for clientID in clientIDs]
     # Compute the proportions of each client for weighted averaging
     proportionsDict = {clientIDs[i] : nk[i]/sum(nk) for i in range(len(clientIDs))}
     
@@ -71,17 +43,9 @@ def federated_averaging(model,
             clientModel.compile(optimizer = tf.keras.optimizers.Adam(learning_rate = LOCAL_LEARNING_RATE),
                       loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True),
                       metrics = ['accuracy'])
-            
-            if use_lazy_loading:
-                # Use tf.data.Dataset directly
-                history = clientModel.fit(imageDict[clientID],
-                          epochs = LOCAL_EPOCHS,
-                          verbose = 1)
-            else:
-                # Use pre-loaded tensors
-                history = clientModel.fit(imageDict[clientID], segMaskDict[clientID],
-                          epochs = LOCAL_EPOCHS, batch_size = LOCAL_BATCH_SIZE,
-                          shuffle = True)
+            history = clientModel.fit(imageDict[clientID], segMaskDict[clientID],
+                      epochs = LOCAL_EPOCHS, batch_size = LOCAL_BATCH_SIZE,
+                      shuffle = True)
             
             # Save the training loss and accuracy in corresponding dictionaries
             lossDict[clientID] = np.append(lossDict[clientID], list(history.history.values())[0])

@@ -53,26 +53,9 @@ def preprocess_image(im0, im1, segmentationMask, tileSize):
     # Combine all defects into a single class 'defect' with label 2
     segmentationMask[(segmentationMask!=0) & (segmentationMask!=1)] = 2
     
-    # Handle image arrays: PIL Image to numpy gives (height, width, channels)
-    # If RGB, convert to grayscale by taking mean or first channel
-    if len(imarray0.shape) == 3 and imarray0.shape[2] == 3:
-        # RGB image: convert to grayscale
-        imarray0 = np.mean(imarray0, axis=2, keepdims=True)
-    elif len(imarray0.shape) == 2:
-        # Grayscale image: add channel dimension
-        imarray0 = np.expand_dims(imarray0, axis=2)
-    
-    if len(imarray1.shape) == 3 and imarray1.shape[2] == 3:
-        # RGB image: convert to grayscale
-        imarray1 = np.mean(imarray1, axis=2, keepdims=True)
-    elif len(imarray1.shape) == 2:
-        # Grayscale image: add channel dimension
-        imarray1 = np.expand_dims(imarray1, axis=2)
-    
     # Normalize pixel values to [0,1] range
-    # imarray shape is already (height, width, 1) after processing above
-    imtensor0 = tf.cast(imarray0, tf.float32)/255.0
-    imtensor1 = tf.cast(imarray1, tf.float32)/255.0
+    imtensor0 = tf.cast(imarray0.reshape(im0.size[0], im0.size[1], 1), tf.float32)/255.0
+    imtensor1 = tf.cast(imarray1.reshape(im1.size[0], im1.size[1], 1), tf.float32)/255.0
     
     # Tile the image and mask
     splitImages0 = split_image(imtensor0, tileSize)

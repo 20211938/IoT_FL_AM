@@ -14,11 +14,6 @@
 pip install -r requirements.txt
 ```
 
-### 2. GPU 확인 (선택사항)
-
-GPU를 사용하려면 CUDA와 cuDNN이 설치되어 있어야 합니다. Jupyter Notebook의 첫 번째 셀을 실행하면 GPU 사용 가능 여부가 자동으로 확인됩니다.
-
-## 데이터 준비 및 통합
 
 ### 1. 데이터 구조
 

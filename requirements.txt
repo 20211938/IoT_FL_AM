@@ -1,10 +1,17 @@
-numpy
+
+# PyTorch GPU (CUDA 12.1) - 드라이버 535.xx 이상 권장
+torch==2.9.0
+torchvision==0.24.0
+torchaudio==2.9.0
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+# 기타 필수 패키지
+numpy==1.25
 Pillow
 matplotlib
 tensorflow
 pymongo
-torch
-torchvision
 tqdm
 scikit-learn
 python-dotenv
+typing-extensions==4.8.0

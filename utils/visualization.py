@@ -121,3 +121,4 @@ def compare_results_testset(cl_model, fl_model, imageDictTest, segMaskDictTest,
             arr[3].axis('off')
 
             plt.show()
+

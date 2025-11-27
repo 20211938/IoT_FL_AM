@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
@@ -9,6 +10,10 @@ from pymongo import MongoClient
 from pymongo.collection import Collection
 import gridfs
 from dotenv import load_dotenv
+
+# 경로 유틸리티 import
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from paths import DATA_DIR, to_str
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -56,8 +61,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("data"),
-        help="Directory to save downloaded layers.",
+        default=DATA_DIR,
+        help=f"Directory to save downloaded layers. (default: {to_str(DATA_DIR)})",
     )
     parser.add_argument(
         "--databases",

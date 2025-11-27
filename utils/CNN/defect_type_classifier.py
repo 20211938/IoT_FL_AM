@@ -152,57 +152,54 @@ class DefectTypeDataset(Dataset):
         if self.verbose:
             print(f"\n[데이터 로딩] 디렉토리 검색 중: {data_dir}")
         
-        db_dirs = [d for d in self.data_dir.iterdir() if d.is_dir()]
+        # data 폴더에서 직접 이미지 파일 검색
+        img_files = list(self.data_dir.glob("*.jpg"))
         if self.verbose:
-            print(f"[데이터 로딩] 발견된 데이터베이스 디렉토리: {len(db_dirs)}개")
+            print(f"[데이터 로딩] 발견된 이미지 파일: {len(img_files)}개")
         
-        for idx, db_dir in enumerate(db_dirs, 1):
-            if self.verbose and idx % 10 == 0:
-                print(f"[데이터 로딩] 처리 중: {idx}/{len(db_dirs)} 디렉토리...")
+        img_count = 0
+        for idx, img_file in enumerate(img_files):
+            if self.verbose and (idx + 1) % 100 == 0:
+                print(f"[데이터 로딩] 처리 중: {idx + 1}/{len(img_files)} 파일...")
             
-            img_count = 0
-            for img_file in db_dir.glob("*.jpg"):
-                json_file = img_file.with_suffix(".jpg.json")
-                if not json_file.exists():
-                    continue
+            json_file = img_file.with_suffix(".jpg.json")
+            if not json_file.exists():
+                continue
+            
+            try:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
                 
-                try:
-                    with open(json_file, 'r', encoding='utf-8') as f:
-                        metadata = json.load(f)
-                    
-                    # 결함 유형 추출 (DepositionImageModel에서만 추출)
-                    defect_types = extract_defect_types_from_metadata(metadata)
-                    
-                    # 다중 레이블 생성 (멀티-핫 인코딩)
-                    # 모든 결함 유형을 포함하는 벡터 생성
-                    num_classes = len(defect_type_mapping)
-                    label_vector = torch.zeros(num_classes, dtype=torch.float32)
-                    
-                    # 발견된 모든 결함 유형에 대해 레이블 설정
-                    has_valid_defect = False
-                    for defect_type in defect_types:
-                        if defect_type in defect_type_mapping:
-                            label_idx = defect_type_mapping[defect_type]
-                            label_vector[label_idx] = 1.0
-                            has_valid_defect = True
-                    
-                    # 결함이 없거나 매핑에 없는 경우 "Normal"로 설정
-                    if not has_valid_defect and "Normal" in defect_type_mapping:
-                        normal_idx = defect_type_mapping["Normal"]
-                        label_vector[normal_idx] = 1.0
-                        defect_types = ["Normal"]
-                    
-                    self.image_paths.append(img_file)
-                    self.labels.append(label_vector)
-                    self.defect_types_list.append(defect_types)  # 리스트로 저장
-                    img_count += 1
-                    
-                except Exception as e:
-                    if self.verbose:
-                        print(f"[경고] 파일 읽기 실패: {json_file} - {e}")
-            
-            if self.verbose and img_count > 0:
-                print(f"  - {db_dir.name}: {img_count}개 이미지 발견")
+                # 결함 유형 추출 (DepositionImageModel에서만 추출)
+                defect_types = extract_defect_types_from_metadata(metadata)
+                
+                # 다중 레이블 생성 (멀티-핫 인코딩)
+                # 모든 결함 유형을 포함하는 벡터 생성
+                num_classes = len(defect_type_mapping)
+                label_vector = torch.zeros(num_classes, dtype=torch.float32)
+                
+                # 발견된 모든 결함 유형에 대해 레이블 설정
+                has_valid_defect = False
+                for defect_type in defect_types:
+                    if defect_type in defect_type_mapping:
+                        label_idx = defect_type_mapping[defect_type]
+                        label_vector[label_idx] = 1.0
+                        has_valid_defect = True
+                
+                # 결함이 없거나 매핑에 없는 경우 "Normal"로 설정
+                if not has_valid_defect and "Normal" in defect_type_mapping:
+                    normal_idx = defect_type_mapping["Normal"]
+                    label_vector[normal_idx] = 1.0
+                    defect_types = ["Normal"]
+                
+                self.image_paths.append(img_file)
+                self.labels.append(label_vector)
+                self.defect_types_list.append(defect_types)  # 리스트로 저장
+                img_count += 1
+                
+            except Exception as e:
+                if self.verbose:
+                    print(f"[경고] 파일 읽기 실패: {json_file} - {e}")
         
         if self.verbose:
             print(f"[데이터 로딩] 완료! 총 {len(self.image_paths)}개 이미지 로드됨")
@@ -273,6 +270,136 @@ class DefectTypeClassifier(nn.Module):
         x = self.features(x)
         x = self.classifier(x)
         return x
+
+
+def calculate_detailed_metrics(dataloader, model, device, idx_to_name: Dict, 
+                                use_amp: bool, stream, criterion):
+    """
+    다중 레이블 분류를 위한 상세 메트릭 계산
+    - Subset Accuracy (현재 사용 중)
+    - Hamming Accuracy
+    - Precision, Recall, F1-score (macro, micro, weighted)
+    - 클래스별 Precision, Recall, F1-score
+    """
+    model.eval()
+    all_predicted = []
+    all_labels = []
+    
+    with torch.no_grad():
+        for images, labels, _, _ in dataloader:
+            # CUDA 스트림을 사용한 비동기 데이터 전송
+            if stream is not None:
+                with torch.cuda.stream(stream):
+                    images = images.to(device, non_blocking=True)
+                    labels = labels.to(device, non_blocking=True)
+                torch.cuda.current_stream().wait_stream(stream)
+            else:
+                images = images.to(device, non_blocking=True)
+                labels = labels.to(device, non_blocking=True)
+            
+            # Mixed Precision Training 사용
+            if use_amp:
+                try:
+                    with torch.amp.autocast('cuda'):
+                        outputs = model(images)
+                except AttributeError:
+                    with torch.cuda.amp.autocast():
+                        outputs = model(images)
+            else:
+                outputs = model(images)
+            
+            probs = torch.sigmoid(outputs.data)
+            predicted = (probs > 0.5).float()
+            
+            all_predicted.append(predicted.cpu())
+            all_labels.append(labels.cpu())
+    
+    # 모든 예측과 레이블을 합치기
+    all_predicted = torch.cat(all_predicted, dim=0)
+    all_labels = torch.cat(all_labels, dim=0)
+    
+    num_classes = all_labels.size(1)
+    num_samples = all_labels.size(0)
+    
+    # 1. Subset Accuracy (현재 사용 중인 방식)
+    subset_correct = (all_predicted == all_labels).all(dim=1).sum().item()
+    subset_accuracy = subset_correct / num_samples if num_samples > 0 else 0.0
+    
+    # 2. Hamming Accuracy (각 레이블별 정확도의 평균)
+    hamming_correct = (all_predicted == all_labels).float().mean().item()
+    hamming_accuracy = hamming_correct
+    
+    # 3. 클래스별 메트릭 계산
+    class_metrics = {}
+    class_precisions = []
+    class_recalls = []
+    class_f1s = []
+    
+    for class_idx in range(num_classes):
+        class_name = idx_to_name.get(class_idx, f"Class_{class_idx}")
+        
+        # True Positive, False Positive, False Negative, True Negative
+        tp = ((all_predicted[:, class_idx] == 1) & (all_labels[:, class_idx] == 1)).sum().item()
+        fp = ((all_predicted[:, class_idx] == 1) & (all_labels[:, class_idx] == 0)).sum().item()
+        fn = ((all_predicted[:, class_idx] == 0) & (all_labels[:, class_idx] == 1)).sum().item()
+        tn = ((all_predicted[:, class_idx] == 0) & (all_labels[:, class_idx] == 0)).sum().item()
+        
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+        
+        class_metrics[class_name] = {
+            'precision': precision,
+            'recall': recall,
+            'f1': f1,
+            'tp': tp,
+            'fp': fp,
+            'fn': fn,
+            'tn': tn,
+            'support': tp + fn  # 실제 양성 샘플 수
+        }
+        
+        class_precisions.append(precision)
+        class_recalls.append(recall)
+        class_f1s.append(f1)
+    
+    # 4. Macro 평균 (클래스별 평균)
+    macro_precision = np.mean(class_precisions) if class_precisions else 0.0
+    macro_recall = np.mean(class_recalls) if class_recalls else 0.0
+    macro_f1 = np.mean(class_f1s) if class_f1s else 0.0
+    
+    # 5. Micro 평균 (전체 TP, FP, FN을 합산하여 계산)
+    total_tp = sum(m['tp'] for m in class_metrics.values())
+    total_fp = sum(m['fp'] for m in class_metrics.values())
+    total_fn = sum(m['fn'] for m in class_metrics.values())
+    
+    micro_precision = total_tp / (total_tp + total_fp) if (total_tp + total_fp) > 0 else 0.0
+    micro_recall = total_tp / (total_tp + total_fn) if (total_tp + total_fn) > 0 else 0.0
+    micro_f1 = 2 * micro_precision * micro_recall / (micro_precision + micro_recall) if (micro_precision + micro_recall) > 0 else 0.0
+    
+    # 6. Weighted 평균 (support로 가중치 적용)
+    total_support = sum(m['support'] for m in class_metrics.values())
+    if total_support > 0:
+        weighted_precision = sum(m['precision'] * m['support'] for m in class_metrics.values()) / total_support
+        weighted_recall = sum(m['recall'] * m['support'] for m in class_metrics.values()) / total_support
+        weighted_f1 = sum(m['f1'] * m['support'] for m in class_metrics.values()) / total_support
+    else:
+        weighted_precision = weighted_recall = weighted_f1 = 0.0
+    
+    return {
+        'subset_accuracy': subset_accuracy,
+        'hamming_accuracy': hamming_accuracy,
+        'macro_precision': macro_precision,
+        'macro_recall': macro_recall,
+        'macro_f1': macro_f1,
+        'micro_precision': micro_precision,
+        'micro_recall': micro_recall,
+        'micro_f1': micro_f1,
+        'weighted_precision': weighted_precision,
+        'weighted_recall': weighted_recall,
+        'weighted_f1': weighted_f1,
+        'class_metrics': class_metrics
+    }
 
 
 def plot_training_history(history: Dict, save_dir: str = "checkpoints"):
@@ -487,24 +614,24 @@ def analyze_defect_types(data_dir: str, min_count: int = 10) -> Dict[str, int]:
     defect_type_counts = Counter()
     data_path = Path(data_dir)
     
-    db_dirs = [d for d in data_path.iterdir() if d.is_dir()]
-    print(f"  - 디렉토리 수: {len(db_dirs)}개")
+    # data 폴더에서 직접 이미지 파일 검색
+    img_files = list(data_path.glob("*.jpg"))
+    print(f"  - 발견된 이미지 파일: {len(img_files)}개")
     
-    for db_dir in db_dirs:
-        for img_file in db_dir.glob("*.jpg"):
-            json_file = img_file.with_suffix(".jpg.json")
-            if not json_file.exists():
-                continue
+    for img_file in img_files:
+        json_file = img_file.with_suffix(".jpg.json")
+        if not json_file.exists():
+            continue
+        
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
             
-            try:
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    metadata = json.load(f)
-                
-                defect_types = extract_defect_types_from_metadata(metadata)
-                for defect_type in defect_types:
-                    defect_type_counts[defect_type] += 1
-            except:
-                continue
+            defect_types = extract_defect_types_from_metadata(metadata)
+            for defect_type in defect_types:
+                defect_type_counts[defect_type] += 1
+        except:
+            continue
     
     # 최소 샘플 수 이상인 결함 유형만 선택
     filtered_types = {k: v for k, v in defect_type_counts.items() 
@@ -688,10 +815,10 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
         # persistent_workers: 워커 재사용으로 오버헤드 감소
         # prefetch_factor: 미리 로딩할 배치 수 (GPU 대기 시간 감소)
         if torch.cuda.is_available():
-            # CPU 코어 수에 맞춰 워커 수 조정 (최대 16)
+            # CPU 코어 수에 맞춰 워커 수 조정 (최대 32로 증가)
             cpu_count = os.cpu_count() or 8
-            num_workers = min(16, max(8, cpu_count // 2))  # CPU 코어의 절반, 최소 8, 최대 16
-            prefetch_factor = 8  # 미리 8개 배치 로딩 (GPU 대기 시간 최소화)
+            num_workers = min(32, max(16, cpu_count // 2))  # CPU 코어의 절반, 최소 16, 최대 32
+            prefetch_factor = 16  # 미리 16개 배치 로딩 (GPU 대기 시간 최소화)
         else:
             num_workers = 0
             prefetch_factor = 2
@@ -735,6 +862,34 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
         
         # 모델 생성 (ResNet 기반)
         model = DefectTypeClassifier(num_classes, model_name=model_name, pretrained=pretrained).to(device)
+        
+        # PyTorch 2.0+ 모델 컴파일 최적화 (GPU 사용률 향상)
+        # Windows 환경에서는 Triton이 제대로 작동하지 않을 수 있으므로 선택적으로 사용
+        # 실제로는 컴파일 없이도 충분한 성능을 얻을 수 있으므로 기본적으로 비활성화
+        use_compile = False
+        if hasattr(torch, 'compile') and torch.cuda.is_available():
+            # Windows에서는 Triton 문제로 인해 torch.compile을 사용하지 않는 것이 안전
+            import platform
+            if platform.system() == 'Windows':
+                print("[참고] Windows 환경에서는 torch.compile을 사용하지 않습니다 (Triton 호환성 문제).")
+                print("  -> 다른 최적화 설정(num_workers, prefetch_factor, cuDNN benchmark)으로 충분한 성능을 얻을 수 있습니다.")
+            else:
+                # Linux/Mac에서는 시도
+                try:
+                    # 먼저 간단한 테스트로 컴파일 가능 여부 확인
+                    test_input = torch.randn(1, 3, 224, 224).to(device)
+                    test_model = torch.compile(model, mode='reduce-overhead', fullgraph=False)
+                    _ = test_model(test_input)  # 테스트 실행
+                    model = test_model
+                    use_compile = True
+                    print("[최적화] PyTorch 2.0+ 모델 컴파일 활성화 (reduce-overhead 모드)")
+                except Exception as e:
+                    # 컴파일 실패 시 원본 모델 사용
+                    print(f"[참고] 모델 컴파일 스킵: {type(e).__name__}")
+                    if "Triton" in str(e) or "triton" in str(e).lower():
+                        print(f"  -> Triton이 필요하지만 사용할 수 없습니다.")
+                    print(f"  -> 모델은 컴파일 없이 실행됩니다 (성능은 여전히 우수합니다).")
+                    use_compile = False
         
         # Transfer Learning: 초기에는 백본 고정 (선택적)
         # model.freeze_features()  # 필요시 주석 해제
@@ -793,10 +948,25 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
         else:
             scaler = None
         
-        # CUDA 스트림 최적화 (GPU 사용률 안정화)
+        # CUDA 최적화 설정 (GPU 사용률 향상)
         if torch.cuda.is_available():
+            # cuDNN 자동 튜닝 (고정 입력 크기에 유리, 성능 향상)
+            torch.backends.cudnn.benchmark = True
+            # 비결정적 알고리즘 허용 (성능 향상)
+            torch.backends.cudnn.deterministic = False
+            # CUDA 스트림 생성
             stream = torch.cuda.Stream()
-            print(f"[최적화] CUDA 스트림 활성화, num_workers={num_workers}, prefetch_factor={prefetch_factor}")
+            # 배치 크기와 GPU 메모리 정보 출력
+            gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)  # GB
+            gpu_name = torch.cuda.get_device_properties(0).name
+            print(f"[최적화] CUDA 최적화 설정")
+            print(f"  - GPU: {gpu_name}")
+            print(f"  - GPU 메모리: {gpu_memory:.1f} GB")
+            print(f"  - cuDNN benchmark: 활성화")
+            print(f"  - CUDA 스트림: 활성화")
+            print(f"  - num_workers: {num_workers}")
+            print(f"  - prefetch_factor: {prefetch_factor}")
+            print(f"  - batch_size: {batch_size}")
         else:
             stream = None
         
@@ -804,7 +974,9 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
         print(f"\n[학습 시작]")
         print(f"  - 에포크: {epochs}")
         print(f"  - 배치 크기: {batch_size}")
-        print(f"  - 조기 종료 기준: 검증 정확도 {early_stopping_threshold}% 도달")
+        print(f"  - 조기 종료 기준: 검증 Subset Accuracy {early_stopping_threshold}% 도달")
+        print(f"  [참고] Subset Accuracy는 모든 레이블이 정확히 일치해야 정확한 것으로 간주합니다.")
+        print(f"         Hamming Accuracy와 F1-score도 함께 확인하세요.")
         
         # 학습 시간 측정 시작
         start_time = time.time()
@@ -861,13 +1033,13 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
                 probs = torch.sigmoid(outputs.data)
                 predicted = (probs > 0.5).float()  # threshold = 0.5
                 
-                # 각 샘플에 대해 예측된 레이블과 실제 레이블이 일치하는지 확인
-                # 다중 레이블에서는 모든 레이블이 정확히 일치해야 정확한 것으로 간주
-                correct = (predicted == labels).all(dim=1).sum().item()
+                # Subset Accuracy: 모든 레이블이 정확히 일치해야 정확한 것으로 간주
+                subset_correct = (predicted == labels).all(dim=1).sum().item()
                 train_total += labels.size(0)
-                train_correct += correct
+                train_correct += subset_correct
             
-            train_acc = 100 * train_correct / train_total
+            # Subset Accuracy (현재 방식)
+            train_acc = 100 * train_correct / train_total if train_total > 0 else 0.0
             avg_train_loss = train_loss / len(train_loader)
             
             # 검증
@@ -910,13 +1082,18 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
                     probs = torch.sigmoid(outputs.data)
                     predicted = (probs > 0.5).float()  # threshold = 0.5
                     
-                    # 각 샘플에 대해 예측된 레이블과 실제 레이블이 일치하는지 확인
-                    correct = (predicted == labels).all(dim=1).sum().item()
+                    # Subset Accuracy: 모든 레이블이 정확히 일치해야 정확한 것으로 간주
+                    subset_correct = (predicted == labels).all(dim=1).sum().item()
                     val_total += labels.size(0)
-                    val_correct += correct
+                    val_correct += subset_correct
             
-            val_acc = 100 * val_correct / val_total
+            # Subset Accuracy (현재 방식)
+            val_acc = 100 * val_correct / val_total if val_total > 0 else 0.0
             avg_val_loss = val_loss / len(val_loader)
+            
+            # 상세 메트릭 계산 (검증 데이터)
+            val_metrics = calculate_detailed_metrics(val_loader, model, device, idx_to_name, 
+                                                     use_amp, stream, criterion)
             
             history['train_loss'].append(avg_train_loss)
             history['train_acc'].append(train_acc)
@@ -924,8 +1101,22 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
             history['val_acc'].append(val_acc)
             
             print(f"\n[Epoch {epoch+1}/{epochs}]")
-            print(f"  Train Loss: {avg_train_loss:.4f}, Train Acc: {train_acc:.2f}% (다중 레이블 정확도)")
-            print(f"  Val Loss: {avg_val_loss:.4f}, Val Acc: {val_acc:.2f}% (다중 레이블 정확도)")
+            print(f"  Train Loss: {avg_train_loss:.4f}, Train Acc: {train_acc:.2f}% (Subset Accuracy)")
+            print(f"  Val Loss: {avg_val_loss:.4f}, Val Acc: {val_acc:.2f}% (Subset Accuracy)")
+            print(f"  [상세 메트릭]")
+            print(f"    - Hamming Accuracy: {val_metrics['hamming_accuracy']*100:.2f}%")
+            print(f"    - Macro F1: {val_metrics['macro_f1']:.4f}")
+            print(f"    - Micro F1: {val_metrics['micro_f1']:.4f}")
+            print(f"    - Weighted F1: {val_metrics['weighted_f1']:.4f}")
+            
+            # 클래스별 성능 출력 (F1-score가 낮은 클래스 위주로)
+            print(f"  [클래스별 F1-Score]")
+            sorted_classes = sorted(val_metrics['class_metrics'].items(), 
+                                  key=lambda x: x[1]['f1'])
+            for class_name, metrics in sorted_classes:
+                print(f"    - {class_name:30s}: F1={metrics['f1']:.4f}, "
+                      f"P={metrics['precision']:.4f}, R={metrics['recall']:.4f} "
+                      f"(support={metrics['support']})")
             
             # 최고 성능 모델 저장
             if val_acc > best_val_acc:
@@ -995,19 +1186,35 @@ def train_defect_classifier(data_dir: str, epochs: int = 300, batch_size: int = 
                 probs = torch.sigmoid(outputs.data)
                 predicted = (probs > 0.5).float()  # threshold = 0.5
                 
-                # 각 샘플에 대해 예측된 레이블과 실제 레이블이 일치하는지 확인
-                correct = (predicted == labels).all(dim=1).sum().item()
+                # Subset Accuracy: 모든 레이블이 정확히 일치해야 정확한 것으로 간주
+                subset_correct = (predicted == labels).all(dim=1).sum().item()
                 test_total += labels.size(0)
-                test_correct += correct
+                test_correct += subset_correct
         
-        test_acc = 100 * test_correct / test_total
+        test_acc = 100 * test_correct / test_total if test_total > 0 else 0.0
         avg_test_loss = test_loss / len(test_loader)
+        
+        # 테스트 데이터에 대한 상세 메트릭 계산
+        test_metrics = calculate_detailed_metrics(test_loader, model, device, idx_to_name, 
+                                                  use_amp, stream, criterion)
         
         history['test_loss'].append(avg_test_loss)
         history['test_acc'].append(test_acc)
         
         print(f"  - 테스트 손실: {avg_test_loss:.4f}")
-        print(f"  - 테스트 정확도: {test_acc:.2f}% (다중 레이블 정확도)")
+        print(f"  - 테스트 Subset Accuracy: {test_acc:.2f}%")
+        print(f"  [상세 메트릭]")
+        print(f"    - Hamming Accuracy: {test_metrics['hamming_accuracy']*100:.2f}%")
+        print(f"    - Macro F1: {test_metrics['macro_f1']:.4f}")
+        print(f"    - Micro F1: {test_metrics['micro_f1']:.4f}")
+        print(f"    - Weighted F1: {test_metrics['weighted_f1']:.4f}")
+        print(f"  [클래스별 F1-Score]")
+        sorted_classes = sorted(test_metrics['class_metrics'].items(), 
+                              key=lambda x: x[1]['f1'])
+        for class_name, metrics in sorted_classes:
+            print(f"    - {class_name:30s}: F1={metrics['f1']:.4f}, "
+                  f"P={metrics['precision']:.4f}, R={metrics['recall']:.4f} "
+                  f"(support={metrics['support']})")
         print("=" * 80)
         
         # 학습 시간 측정 종료
@@ -1058,12 +1265,12 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='결함 유형 분류 모델 학습')
-    parser.add_argument('--data-dir', type=str, default='data/labeled_layers',
+    parser.add_argument('--data-dir', type=str, default='data',
                        help='데이터 디렉토리')
     parser.add_argument('--epochs', type=int, default=300,
                        help='학습 에포크 수')
-    parser.add_argument('--batch-size', type=int, default=32,
-                       help='배치 크기 (기본값: 32, ResNet 사용 시 권장)')
+    parser.add_argument('--batch-size', type=int, default=64,
+                       help='배치 크기 (기본값: 64, GPU 활용률 향상을 위해 증가)')
     parser.add_argument('--min-count', type=int, default=10,
                        help='최소 샘플 수 (이보다 적으면 제외)')
     parser.add_argument('--learning-rate', type=float, default=0.0001,
@@ -1079,8 +1286,8 @@ if __name__ == "__main__":
                        help='Label Smoothing 값 (0.0-0.3 권장, 기본값: 0.1)')
     parser.add_argument('--image-size', type=int, default=224,
                        help='이미지 크기 (기본값: 224, ResNet 표준 입력 크기)')
-    parser.add_argument('--early-stopping-threshold', type=float, default=98.0,
-                       help='조기 종료 기준 정확도 (기본값: 98.0%%)')
+    parser.add_argument('--early-stopping-threshold', type=float, default=95.0,
+                       help='조기 종료 기준 정확도 (기본값: 95.0%%, Subset Accuracy 기준)')
     parser.add_argument('--log-dir', type=str, default='logs',
                        help='로그 파일을 저장할 디렉토리 (기본값: logs, None이면 로그 저장 안 함)')
     parser.add_argument('--model-name', type=str, default='resnet34',
@@ -1110,4 +1317,3 @@ if __name__ == "__main__":
         model_name=args.model_name,
         pretrained=not args.no_pretrained
     )
-

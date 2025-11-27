@@ -630,8 +630,8 @@ def main():
     print("=" * 60)
     
     # 데이터 디렉토리 설정
-    data_dir = "data/labeled_layers"
-    checkpoint_dir = "checkpoints"
+    data_dir = to_str(LABELED_LAYERS_DIR)
+    checkpoint_dir = to_str(CHECKPOINTS_DIR)
     
     # AprilGAN 분류기 초기화
     print("\n[1단계] 모델 초기화")

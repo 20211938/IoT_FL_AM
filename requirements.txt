@@ -1,10 +1,9 @@
 numpy
 Pillow
 matplotlib
-tensorflow
+tensorflow>=2.15.0
 pymongo
-torch
-torchvision
+typing-extensions>=4.8.0
 tqdm
 scikit-learn
 python-dotenv

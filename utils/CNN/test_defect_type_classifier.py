@@ -10,6 +10,10 @@ from pathlib import Path
 from collections import defaultdict, Counter
 from typing import Dict, List
 import torch
+
+# 경로 유틸리티 import
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from paths import LABELED_LAYERS_DIR, CHECKPOINTS_DIR, ensure_dir, to_str
 import torch.nn as nn
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
@@ -251,7 +255,7 @@ def visualize_results(cm, target_names, save_path="test_results_confusion_matrix
     plt.close()
 
 
-def test_classifier(checkpoint_path=None, data_dir="data/labeled_layers", 
+def test_classifier(checkpoint_path=None, data_dir=None, 
                    batch_size=32, min_defect_count=5):
     """결함 유형 분류 모델 테스트"""
     print("=" * 60)
@@ -261,17 +265,22 @@ def test_classifier(checkpoint_path=None, data_dir="data/labeled_layers",
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"\n[Device] {device}")
     
+    # 기본 경로 설정
+    if data_dir is None:
+        data_dir = to_str(LABELED_LAYERS_DIR)
+    else:
+        data_dir = to_str(Path(data_dir).resolve())
+    
     # 체크포인트 경로 확인
     if checkpoint_path is None:
-        checkpoint_dir = "checkpoints"
-        checkpoint_path = os.path.join(checkpoint_dir, "defect_type_classifier_best.pth")
+        checkpoint_path = to_str(CHECKPOINTS_DIR / "defect_type_classifier_best.pth")
         
-        if not os.path.exists(checkpoint_path):
+        if not Path(checkpoint_path).exists():
             print(f"\n[오류] 체크포인트 파일이 없습니다: {checkpoint_path}")
             print("  먼저 모델을 학습하세요.")
             return
     
-    if not os.path.exists(checkpoint_path):
+    if not Path(checkpoint_path).exists():
         print(f"\n[오류] 체크포인트 파일이 없습니다: {checkpoint_path}")
         return
     
@@ -355,9 +364,9 @@ def main():
     
     parser = argparse.ArgumentParser(description='결함 유형 분류 모델 테스트')
     parser.add_argument('--checkpoint', type=str, default=None,
-                       help='체크포인트 파일 경로 (기본값: checkpoints/defect_type_classifier_best.pth)')
-    parser.add_argument('--data-dir', type=str, default='data/labeled_layers',
-                       help='테스트 데이터 디렉토리')
+                       help=f'체크포인트 파일 경로 (기본값: {to_str(CHECKPOINTS_DIR / "defect_type_classifier_best.pth")})')
+    parser.add_argument('--data-dir', type=str, default=None,
+                       help=f'테스트 데이터 디렉토리 (기본값: {to_str(LABELED_LAYERS_DIR)})')
     parser.add_argument('--batch-size', type=int, default=32,
                        help='배치 크기')
     parser.add_argument('--min-count', type=int, default=5,

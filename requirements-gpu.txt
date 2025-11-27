@@ -1,0 +1,23 @@
+# GPU 버전 PyTorch 설치용 requirements 파일
+# 사용법: pip install -r requirements-gpu.txt
+# 
+# 이 파일은 PyTorch GPU 버전을 설치하기 위한 특별한 인덱스 URL을 사용합니다.
+# NVIDIA GPU가 없는 경우 requirements.txt를 사용하세요.
+
+# PyTorch GPU (CUDA 12.1) - 드라이버 535.xx 이상 권장
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# 기타 필수 패키지
+numpy
+Pillow
+matplotlib
+tensorflow>=2.15.0
+pymongo
+tqdm
+scikit-learn
+python-dotenv
+typing-extensions>=4.8.0
+

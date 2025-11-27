@@ -10,6 +10,10 @@ from collections import Counter, defaultdict
 from typing import Dict, List, Set, Tuple
 import sys
 
+# 경로 유틸리티 import
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from paths import DATA_DIR, to_str
+
 
 def normalize_comment(comment: str) -> str:
     """
@@ -33,8 +37,13 @@ def normalize_comment(comment: str) -> str:
     return normalized
 
 
-def analyze_defect_dataset(data_dir: str = "data"):
+def analyze_defect_dataset(data_dir: str = None):
     """데이터셋의 IsLabeled, TagBoxes, Comment 분포 분석"""
+    if data_dir is None:
+        data_dir = to_str(DATA_DIR)
+    else:
+        data_dir = to_str(Path(data_dir).resolve())
+    
     print("=" * 60)
     print("데이터셋 IsLabeled, TagBoxes, Comment 분포 분석")
     print("=" * 60)

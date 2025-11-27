@@ -10,6 +10,10 @@ from typing import Dict, List, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 
+# 경로 유틸리티 import
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from paths import LOGS_DIR, OUTPUT_DIR, to_str
+
 # 로그 파일에서 정규 표현식으로 데이터 추출
 PATTERN_EPOCH = re.compile(r'\[Epoch (\d+)/(\d+)\]')
 PATTERN_TRAIN_LOSS = re.compile(r'Train Loss: ([\d.]+)')
@@ -263,8 +267,11 @@ def main():
     # 출력 파일 경로 결정
     output_path = args.output
     if output_path is None:
-        log_dir = os.path.dirname(log_file_path) or "."
-        output_path = os.path.join(log_dir, "training_history_from_log.png")
+        log_file_path_obj = Path(log_file_path)
+        if log_file_path_obj.parent.exists():
+            output_path = to_str(log_file_path_obj.parent / "training_history_from_log.png")
+        else:
+            output_path = to_str(OUTPUT_DIR / "training_history_from_log.png")
     
     # 그래프 생성
     plot_training_history_from_log(history, output_path)

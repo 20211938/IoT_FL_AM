@@ -12,9 +12,10 @@ import torchvision.transforms as transforms
 # utils 모듈 import
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.AprilGAN.zero_shot_defect_classifier import AprilGANZeroShotClassifier, LabeledImageDataset
+from paths import LABELED_LAYERS_DIR, CHECKPOINTS_DIR, to_str
 
 
-def test_model(checkpoint_path=None, data_dir="data/labeled_layers", 
+def test_model(checkpoint_path=None, data_dir=None, 
                max_eval_samples=100, num_sample_tests=10):
     """
     학습된 모델을 테스트합니다.
@@ -30,23 +31,23 @@ def test_model(checkpoint_path=None, data_dir="data/labeled_layers",
     print("=" * 60)
     
     # 체크포인트 경로 확인
-    checkpoint_dir = "checkpoints"
+    checkpoint_dir = CHECKPOINTS_DIR
     if checkpoint_path is None:
-        if not os.path.exists(checkpoint_dir):
-            print(f"\n[오류] 체크포인트 디렉토리가 없습니다: {checkpoint_dir}")
+        if not checkpoint_dir.exists():
+            print(f"\n[오류] 체크포인트 디렉토리가 없습니다: {to_str(checkpoint_dir)}")
             print("  먼저 모델을 학습하세요.")
             return
         
-        checkpoints = sorted(Path(checkpoint_dir).glob("aprilgan_epoch_*.pth"))
+        checkpoints = sorted(checkpoint_dir.glob("aprilgan_epoch_*.pth"))
         if not checkpoints:
-            print(f"\n[오류] 체크포인트 파일이 없습니다: {checkpoint_dir}")
+            print(f"\n[오류] 체크포인트 파일이 없습니다: {to_str(checkpoint_dir)}")
             print("  먼저 모델을 학습하세요.")
             return
         
-        checkpoint_path = str(checkpoints[-1])
+        checkpoint_path = to_str(checkpoints[-1])
         print(f"\n[체크포인트] 최신 체크포인트 사용: {checkpoint_path}")
     else:
-        if not os.path.exists(checkpoint_path):
+        if not Path(checkpoint_path).exists():
             print(f"\n[오류] 체크포인트 파일이 없습니다: {checkpoint_path}")
             return
         print(f"\n[체크포인트] 지정된 체크포인트 사용: {checkpoint_path}")
@@ -216,8 +217,8 @@ def main():
     parser = argparse.ArgumentParser(description='AprilGAN 기반 제로샷 결함 분류 모델 테스트')
     parser.add_argument('--checkpoint', type=str, default=None,
                        help='체크포인트 파일 경로 (지정하지 않으면 최신 체크포인트 사용)')
-    parser.add_argument('--data-dir', type=str, default='data/labeled_layers',
-                       help='테스트 데이터 디렉토리 (기본값: data/labeled_layers)')
+    parser.add_argument('--data-dir', type=str, default=None,
+                       help=f'테스트 데이터 디렉토리 (기본값: {to_str(LABELED_LAYERS_DIR)})')
     parser.add_argument('--max-samples', type=int, default=100,
                        help='평가할 최대 샘플 수 (기본값: 100)')
     parser.add_argument('--num-tests', type=int, default=10,

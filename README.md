@@ -208,12 +208,12 @@ pretrained = True               # 사전 학습된 가중치 사용 여부
 
 ```bash
 # 기본 사용
-python utils/CNN/defect_type_classifier.py --data-dir data/labeled_layers
+python utils/CNN/defect_type_classifier.py --data-dir data/
 
 # 모델 테스트
 python utils/CNN/test_defect_type_classifier.py \
     --checkpoint checkpoints/best_model.pth \
-    --data-dir data/labeled_layers
+    --data-dir data
 ```
 
 ### 평가 지표

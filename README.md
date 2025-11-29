@@ -8,7 +8,7 @@
 
 ```mermaid
 graph TD
-    A[원본 이미지 데이터] --> B[Post Spreading 이미지<br/>Post Fusion 이미지]
+    A[원본 이미지 데이터] --> B[Scanning Image 이미지<br/>Deposition Image 이미지]
     A --> C[원본 마스크 파일<br/>.npy]
     
     B --> D[1단계: U-Net 기반 결함 검출]
@@ -66,8 +66,8 @@ graph TD
 
 ```
 data/
-├── 0/                    # Post Spreading 이미지 (.jpg)
-├── 1/                    # Post Fusion 이미지 (.jpg)
+├── 0/                    # Scanning Image 이미지 (.jpg)
+├── 1/                    # Deposition Image 이미지 (.jpg)
 └── annotations/          # 원본 마스크 파일 (.npy)
     ├── 0: 배경 (정상, 결함 아님)
     ├── 1: 파트 (정상, 결함 아님)
@@ -81,8 +81,8 @@ graph LR
     A[원본 데이터] --> B[이미지 데이터]
     A --> C[마스크 데이터]
     
-    B --> D[Deposition Image<br/>0/ 디렉토리]
-    B --> E[Scanning Image/>1/ 디렉토리]
+    B --> D[Scanning Image<br/>0/ 디렉토리]
+    B --> E[Deposition Image/>1/ 디렉토리]
     
     C --> F[annotations/<br/>.npy 파일]
     

@@ -108,8 +108,6 @@ def create_cnn_dataset(client_identifier_dict, data_dir, target_size=(640, 640),
         print(f"Contains {len(file_list)} images...")
         print(f"Valid images: {len(images)} (filtered {len(file_list) - len(images)} invalid labels)")
         print(f"Image Tensor Shape: {imageDict[clientID].shape}")
-        print(f"Label Shape: {labelDict[clientID].shape}")
-        print(f"Label distribution: {Counter(labelDict[clientID].numpy())}")
     
     return imageDict, labelDict
 

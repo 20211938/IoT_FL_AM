@@ -13,7 +13,8 @@ def federated_averaging(model,
                         clientIDs, imageDict, labelDict,
                         testImages, testLabels,
                         num_classes,
-                        device=None):
+                        device=None,
+                        early_stopping_accuracy=None):
     """
     PyTorch 기반 FedAvg 알고리즘 실행
     
@@ -221,5 +222,11 @@ def federated_averaging(model,
         
         print(f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.2f}%')
         print('Done...\n')
+
+        if early_stopping_accuracy is not None and test_accuracy >= early_stopping_accuracy:
+            print(f'=' * 60)
+            print(f'조기 종료: 서버 정확도 {test_accuracy:.2f}%가 목표 정확도 {early_stopping_accuracy:.2f}%에 도달했습니다!')
+            print(f'=' * 60)
+            break
     
     return model, serverStateDict, lossDict, testLoss, accuracyDict, testAccuracy

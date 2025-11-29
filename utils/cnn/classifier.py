@@ -144,7 +144,15 @@ def load_cnn_model(model_path, num_classes=None, device=None):
             raise ValueError("num_classes를 확인할 수 없습니다. 명시적으로 지정해주세요.")
     
     model = CNNClassifier(num_classes)
-    model.load_state_dict(checkpoint.get('model_state_dict', checkpoint))
+    
+    # state_dict 가져오기
+    state_dict = checkpoint.get('model_state_dict', checkpoint)
+    
+    # BatchNorm 관련 키 필터링 (현재 모델은 BatchNorm이 없음)
+    filtered_state_dict = {k: v for k, v in state_dict.items() if not k.startswith('bn')}
+    
+    # 필터링된 state_dict 로드
+    model.load_state_dict(filtered_state_dict, strict=False)
     model = model.to(device)
     model.eval()
     

@@ -12,6 +12,7 @@ def federated_averaging(model,
                         LOCAL_LEARNING_RATE,
                         clientIDs, imageDict, labelDict,
                         testImages, testLabels,
+                        num_classes,
                         device=None):
     """
     PyTorch 기반 FedAvg 알고리즘 실행
@@ -27,6 +28,7 @@ def federated_averaging(model,
         labelDict: 클라이언트별 레이블 딕셔너리
         testImages: 테스트 이미지 텐서
         testLabels: 테스트 레이블 텐서
+        num_classes: 총 클래스 수
         device: PyTorch device
     
     Returns:
@@ -147,10 +149,33 @@ def federated_averaging(model,
         updatedServerStateDict = {}
         
         for key in serverStateDict.keys():
-            temp = torch.zeros_like(serverStateDict[key])
-            for clientID in clientIDs:
-                temp += proportionsDict[clientID] * clientStateDicts[clientID][key]
-            updatedServerStateDict[key] = temp
+            param = serverStateDict[key]
+            
+            # Float 타입 파라미터: 가중 평균 (weight, bias, running_mean, running_var 등)
+            if param.dtype in [torch.float32, torch.float64]:
+                temp = torch.zeros_like(param)
+                for clientID in clientIDs:
+                    if clientID in clientStateDicts:
+                        temp += proportionsDict[clientID] * clientStateDicts[clientID][key]
+                updatedServerStateDict[key] = temp
+            
+            # Long 타입 파라미터 처리
+            elif param.dtype == torch.int64:
+                # num_batches_tracked는 합산하는 것이 더 적절
+                if 'num_batches_tracked' in key:
+                    temp = torch.zeros_like(param, dtype=torch.int64)
+                    for clientID in clientIDs:
+                        if clientID in clientStateDicts:
+                            temp += clientStateDicts[clientID][key].to(torch.int64)
+                    updatedServerStateDict[key] = temp
+                else:
+                    # 기타 Long 타입 버퍼는 첫 번째 클라이언트 값 사용
+                    if clientIDs and clientIDs[0] in clientStateDicts:
+                        updatedServerStateDict[key] = clientStateDicts[clientIDs[0]][key].clone()
+            else:
+                # 기타 타입은 첫 번째 클라이언트 값 사용
+                if clientIDs and clientIDs[0] in clientStateDicts:
+                    updatedServerStateDict[key] = clientStateDicts[clientIDs[0]][key].clone()
         
         print('Done...')
         

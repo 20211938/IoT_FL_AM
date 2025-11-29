@@ -140,11 +140,10 @@ def unwrap_client_data(imageDict, labelDict, clientIDs):
     return images, labels
 
 
-# utils/cnn/dataset_functions.py의 get_label_mapping 함수 수정
 def get_label_mapping(data_dir, client_identifier_dict):
     """
     데이터에서 결함 유형 레이블 매핑 생성
-    npy 파일에 있는 모든 고유한 값을 수집합니다.
+    0과 1은 정상 부분(배경/파트)이므로 제외하고, 나머지 결함 유형만 수집합니다.
     
     Args:
         data_dir: data 디렉터리 경로
@@ -159,7 +158,7 @@ def get_label_mapping(data_dir, client_identifier_dict):
     
     all_defect_types = set()
     
-    # 모든 파일에서 결함 유형 수집 (모든 고유한 값)
+    # 모든 파일에서 결함 유형 수집 (0과 1 제외)
     for file_list in client_identifier_dict.values():
         for file_name in file_list:
             npy_path = annotations_path / f"{file_name}.npy"
@@ -167,14 +166,17 @@ def get_label_mapping(data_dir, client_identifier_dict):
                 # npy 파일을 직접 로드하여 모든 고유한 값 수집
                 mask = np.load(str(npy_path))
                 unique_values = np.unique(mask)
-                all_defect_types.update(unique_values)
+                
+                # 0(배경)과 1(파트)은 정상 부분이므로 제외
+                defect_values = [v for v in unique_values if v not in [0, 1]]
+                all_defect_types.update(defect_values)
     
     # 정렬하여 매핑 생성
     sorted_types = sorted(all_defect_types)
     label_mapping = {defect_type: idx for idx, defect_type in enumerate(sorted_types)}
     num_classes = len(sorted_types)
     
-    print(f"발견된 결함 유형: {sorted_types}")
+    print(f"발견된 결함 유형 (0과 1 제외): {sorted_types}")
     print(f"레이블 매핑: {label_mapping}")
     print(f"총 클래스 수: {num_classes}")
     

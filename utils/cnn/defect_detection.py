@@ -11,26 +11,33 @@ from utils.u_net.image_processing import preprocess_image
 def get_defect_type_from_npy(npy_path):
     '''
     원본 npy 파일에서 결함 유형 숫자 값들의 빈도를 계산하여 가장 많이 나타나는 결함 유형을 반환
+    0과 1은 정상 부분(배경/파트)이므로 제외하고, 나머지 결함 중 가장 픽셀 수가 많은 것을 반환
     
     Args:
         npy_path: 원본 npy 파일 경로
     
     Returns:
-        가장 많이 나타나는 결함 유형 숫자, 빈도 딕셔너리
+        가장 많이 나타나는 결함 유형 숫자, 빈도 딕셔너리 (0과 1 제외)
     '''
     mask = np.load(npy_path)
     
-    # 모든 값에 대해 빈도 계산 (필터링 없음)
+    # 모든 값에 대해 빈도 계산
     if mask.size == 0:
         return None, {}
     
-    # 각 결함 유형의 빈도 계산
-    defect_counts = Counter(mask.flatten())
+    # 각 값의 빈도 계산
+    all_counts = Counter(mask.flatten())
+    
+    # 0(배경)과 1(파트)은 정상 부분이므로 제외하고 결함만 필터링
+    defect_counts = {k: v for k, v in all_counts.items() if k not in [0, 1]}
+    
+    if len(defect_counts) == 0:
+        return None, {}
     
     # 가장 많이 나타나는 결함 유형
-    most_common_defect = defect_counts.most_common(1)[0][0]
+    most_common_defect = max(defect_counts.items(), key=lambda x: x[1])[0]
     
-    return most_common_defect, dict(defect_counts)
+    return most_common_defect, defect_counts
 
 
 def detect_defects_with_unet(unet_model, image_path0, image_path1, tileSize=128, threshold=0.01):
@@ -47,6 +54,8 @@ def detect_defects_with_unet(unet_model, image_path0, image_path1, tileSize=128,
     Returns:
         결함 존재 여부 (True/False), 예측 마스크
     '''
+    import tensorflow as tf
+    
     # 이미지 로드
     im0 = Image.open(image_path0)
     im1 = Image.open(image_path1)

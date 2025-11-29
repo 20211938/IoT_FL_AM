@@ -151,9 +151,9 @@ def visualize_predictions(model, imageDictTest, labelDictTest, testClients,
         title += f'True: {true_label}, Pred: {pred_label}\n'
         title += f'Conf: {confidence:.3f}'
         if is_correct:
-            title += ' ✓'
+            title += ' [OK]'
         else:
-            title += ' ✗'
+            title += ' [X]'
         axes[idx].set_title(title, color='green' if is_correct else 'red')
         axes[idx].axis('off')
     

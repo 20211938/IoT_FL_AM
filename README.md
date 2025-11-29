@@ -81,8 +81,8 @@ graph LR
     A[원본 데이터] --> B[이미지 데이터]
     A --> C[마스크 데이터]
     
-    B --> D[Post Spreading<br/>0/ 디렉토리]
-    B --> E[Post Fusion<br/>1/ 디렉토리]
+    B --> D[Deposition Image<br/>0/ 디렉토리]
+    B --> E[Scanning Image/>1/ 디렉토리]
     
     C --> F[annotations/<br/>.npy 파일]
     

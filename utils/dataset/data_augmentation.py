@@ -111,18 +111,24 @@ def get_augmentation_suffix(rotation, flip_lr, flip_ud):
     return "_" + "_".join(suffix_parts)
 
 
-def process_dataset(data_dir='data'):
+def process_dataset(data_dir='dataset', output_dir='dataset_augmented'):
     """
     모든 데이터셋에 대해 데이터 증강 수행
     
     Args:
-        data_dir: 데이터 디렉토리 경로
+        data_dir: 원본 데이터 디렉토리 경로
+        output_dir: 증강된 데이터를 저장할 디렉토리 경로
     """
     data_path = Path(data_dir)
+    output_path = Path(output_dir)
     
     if not data_path.exists():
         print(f"오류: {data_dir} 디렉토리를 찾을 수 없습니다.")
         return
+    
+    # 출력 디렉토리 생성
+    output_path.mkdir(parents=True, exist_ok=True)
+    print(f"증강된 데이터 저장 경로: {output_path}")
     
     # 모든 데이터셋 폴더 찾기
     dataset_folders = [d for d in data_path.iterdir() 
@@ -153,6 +159,16 @@ def process_dataset(data_dir='data'):
             print(f"  경고: {annotations_folder} 폴더를 찾을 수 없습니다. 건너뜁니다.")
             continue
         
+        # 출력 디렉토리 구조 생성
+        output_dataset_folder = output_path / dataset_folder.name
+        output_folder_0 = output_dataset_folder / '0'
+        output_folder_1 = output_dataset_folder / '1'
+        output_annotations_folder = output_dataset_folder / 'annotations'
+        
+        output_folder_0.mkdir(parents=True, exist_ok=True)
+        output_folder_1.mkdir(parents=True, exist_ok=True)
+        output_annotations_folder.mkdir(parents=True, exist_ok=True)
+        
         # 0 폴더의 모든 jpg 파일 찾기
         jpg_files = list(folder_0.glob('*.jpg'))
         
@@ -166,7 +182,7 @@ def process_dataset(data_dir='data'):
         for jpg_file in tqdm(jpg_files, desc=f"  {dataset_folder.name}"):
             file_stem = jpg_file.stem  # 파일명에서 확장자 제거 (예: '0000000')
             
-            # 이미지 파일 경로
+            # 원본 이미지 파일 경로
             img_0_path = folder_0 / f"{file_stem}.jpg"
             img_1_path = folder_1 / f"{file_stem}.jpg"
             mask_path = annotations_folder / f"{file_stem}.npy"
@@ -211,10 +227,10 @@ def process_dataset(data_dir='data'):
                 if suffix == "_aug0":
                     continue
                 
-                # 증강된 파일 저장
-                aug_img_0_path = folder_0 / f"{file_stem}{suffix}.jpg"
-                aug_img_1_path = folder_1 / f"{file_stem}{suffix}.jpg"
-                aug_mask_path = annotations_folder / f"{file_stem}{suffix}.npy"
+                # 증강된 파일 저장 경로 (출력 디렉토리에 저장)
+                aug_img_0_path = output_folder_0 / f"{file_stem}{suffix}.jpg"
+                aug_img_1_path = output_folder_1 / f"{file_stem}{suffix}.jpg"
+                aug_mask_path = output_annotations_folder / f"{file_stem}{suffix}.npy"
                 
                 try:
                     aug_img_0.save(aug_img_0_path, quality=95)
@@ -229,6 +245,7 @@ def process_dataset(data_dir='data'):
     print(f"\n=== 증강 완료 ===")
     print(f"원본 이미지 수: {total_images}")
     print(f"생성된 증강 데이터 수: {total_augmented}")
+    print(f"증강 데이터 저장 위치: {output_path}")
     print(f"예상 총 데이터 수: {total_images * len(aug_combinations)} = {total_images} × {len(aug_combinations)}")
 
 
@@ -236,10 +253,12 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='데이터 증강 스크립트')
-    parser.add_argument('--data_dir', type=str, default='data',
-                       help='데이터 디렉토리 경로 (기본값: data)')
+    parser.add_argument('--data_dir', type=str, default='dataset',
+                       help='원본 데이터 디렉토리 경로 (기본값: dataset)')
+    parser.add_argument('--output_dir', type=str, default='dataset_augmented',
+                       help='증강된 데이터 저장 디렉토리 경로 (기본값: dataset_augmented)')
     
     args = parser.parse_args()
     
-    process_dataset(args.data_dir)
+    process_dataset(args.data_dir, args.output_dir)
 

@@ -78,7 +78,7 @@ def convert_tif_to_jpg(data_dir, delete_original=True, quality=95):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='data 폴더 내의 .tif 파일을 .jpg로 변환')
-    parser.add_argument('--data-dir', type=str, default='data',
+    parser.add_argument('--data-dir', type=str, default='dataset',
                         help='변환할 데이터 폴더 경로 (기본값: data)')
     parser.add_argument('--delete-original', action='store_true', default=True,
                         help='원본 .tif 파일 삭제 (기본값: True)')

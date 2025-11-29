@@ -20,13 +20,13 @@ def merge_data_files(source_dir=None, output_dir=None):
     """
     # 스크립트 파일의 위치를 기준으로 프로젝트 루트 찾기
     script_path = Path(__file__).resolve()
-    project_root = script_path.parent.parent  # new_utils의 부모 폴더 = 프로젝트 루트
+    project_root = script_path.parent.parent.parent  # new_utils의 부모 폴더 = 프로젝트 루트
     
     # 기본 경로 설정 (프로젝트 루트 기준)
     if source_dir is None:
-        source_dir = project_root / 'data'
+        source_dir = project_root / 'dataset'
     if output_dir is None:
-        output_dir = project_root / 'merged_data'
+        output_dir = project_root / 'data_test'
     
     # Path 객체로 변환
     source_path = Path(source_dir) if isinstance(source_dir, (str, Path)) else source_dir

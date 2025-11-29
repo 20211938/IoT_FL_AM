@@ -111,9 +111,10 @@ def get_augmentation_suffix(rotation, flip_lr, flip_ud):
     return "_" + "_".join(suffix_parts)
 
 
-def process_dataset(data_dir='data'):
+def process_dataset(data_dir='data_test'):
     """
     모든 데이터셋에 대해 데이터 증강 수행
+    증강된 데이터는 data_augments 폴더에 저장되며, 원본 데이터는 그대로 유지됩니다.
     
     Args:
         data_dir: 데이터 디렉토리 경로
@@ -124,62 +125,63 @@ def process_dataset(data_dir='data'):
         print(f"오류: {data_dir} 디렉토리를 찾을 수 없습니다.")
         return
     
-    # 모든 데이터셋 폴더 찾기
-    dataset_folders = [d for d in data_path.iterdir() 
-                      if d.is_dir() and (d / '0').exists() and (d / '1').exists()]
+    # data_augments 폴더 생성 (원본 데이터와 같은 레벨)
+    output_path = data_path.parent / 'data_augments'
+    output_path.mkdir(exist_ok=True)
+    print(f"증강 데이터 저장 경로: {output_path}")
     
-    if not dataset_folders:
-        print(f"오류: {data_dir}에 데이터셋 폴더를 찾을 수 없습니다.")
-        return
+    # 데이터 구조 확인: data_dir 바로 아래에 0, 1, annotations 폴더가 있는지 확인
+    folder_0 = data_path / '0'
+    folder_1 = data_path / '1'
+    annotations_folder = data_path / 'annotations'
     
-    print(f"총 {len(dataset_folders)}개의 데이터셋을 찾았습니다.")
-    
-    # 증강 조합 생성
-    aug_combinations = generate_augmentation_combinations()
-    print(f"각 이미지당 {len(aug_combinations)}개의 증강 데이터를 생성합니다.")
-    
-    total_images = 0
-    total_augmented = 0
-    
-    # 각 데이터셋 처리
-    for dataset_folder in dataset_folders:
-        print(f"\n처리 중: {dataset_folder.name}")
+    # 평면 구조인지 확인 (data_test 구조)
+    if folder_0.exists() and folder_1.exists() and annotations_folder.exists():
+        print("평면 구조 감지: data_dir/0, data_dir/1, data_dir/annotations")
         
-        folder_0 = dataset_folder / '0'
-        folder_1 = dataset_folder / '1'
-        annotations_folder = dataset_folder / 'annotations'
+        # 출력 폴더 구조 생성 (data_augments/0, 1, annotations)
+        output_folder_0 = output_path / '0'
+        output_folder_1 = output_path / '1'
+        output_annotations_folder = output_path / 'annotations'
         
-        if not annotations_folder.exists():
-            print(f"  경고: {annotations_folder} 폴더를 찾을 수 없습니다. 건너뜁니다.")
-            continue
+        output_folder_0.mkdir(parents=True, exist_ok=True)
+        output_folder_1.mkdir(parents=True, exist_ok=True)
+        output_annotations_folder.mkdir(parents=True, exist_ok=True)
+        
+        # 증강 조합 생성
+        aug_combinations = generate_augmentation_combinations()
+        print(f"각 이미지당 {len(aug_combinations)}개의 증강 데이터를 생성합니다.")
+        
+        total_images = 0
+        total_augmented = 0
         
         # 0 폴더의 모든 jpg 파일 찾기
         jpg_files = list(folder_0.glob('*.jpg'))
         
         if not jpg_files:
-            print(f"  경고: {folder_0}에 jpg 파일을 찾을 수 없습니다.")
-            continue
+            print(f"경고: {folder_0}에 jpg 파일을 찾을 수 없습니다.")
+            return
         
-        print(f"  {len(jpg_files)}개의 이미지 파일 발견")
+        print(f"{len(jpg_files)}개의 이미지 파일 발견")
         
         # 각 이미지 처리
-        for jpg_file in tqdm(jpg_files, desc=f"  {dataset_folder.name}"):
-            file_stem = jpg_file.stem  # 파일명에서 확장자 제거 (예: '0000000')
+        for jpg_file in tqdm(jpg_files, desc="증강 처리"):
+            file_stem = jpg_file.stem  # 파일명에서 확장자 제거 (예: '000001')
             
-            # 이미지 파일 경로
+            # 원본 이미지 파일 경로
             img_0_path = folder_0 / f"{file_stem}.jpg"
             img_1_path = folder_1 / f"{file_stem}.jpg"
             mask_path = annotations_folder / f"{file_stem}.npy"
             
             # 파일 존재 확인
             if not img_0_path.exists():
-                print(f"    경고: {img_0_path}를 찾을 수 없습니다.")
+                print(f"  경고: {img_0_path}를 찾을 수 없습니다.")
                 continue
             if not img_1_path.exists():
-                print(f"    경고: {img_1_path}를 찾을 수 없습니다.")
+                print(f"  경고: {img_1_path}를 찾을 수 없습니다.")
                 continue
             if not mask_path.exists():
-                print(f"    경고: {mask_path}를 찾을 수 없습니다.")
+                print(f"  경고: {mask_path}를 찾을 수 없습니다.")
                 continue
             
             # 이미지와 마스크 로드
@@ -188,7 +190,7 @@ def process_dataset(data_dir='data'):
                 img_1 = Image.open(img_1_path)
                 mask = np.load(mask_path)
             except Exception as e:
-                print(f"    오류: {file_stem} 파일 로드 실패 - {e}")
+                print(f"  오류: {file_stem} 파일 로드 실패 - {e}")
                 continue
             
             total_images += 1
@@ -207,14 +209,14 @@ def process_dataset(data_dir='data'):
                 suffix = get_augmentation_suffix(rotation, flip_lr, flip_ud)
                 
                 # 원본인 경우 (rotation=0, flip_lr=False, flip_ud=False)
-                # 이미 존재하므로 건너뛰기
+                # 원본은 원래 위치에 그대로 두고, data_augments에는 저장하지 않음
                 if suffix == "_aug0":
                     continue
                 
-                # 증강된 파일 저장
-                aug_img_0_path = folder_0 / f"{file_stem}{suffix}.jpg"
-                aug_img_1_path = folder_1 / f"{file_stem}{suffix}.jpg"
-                aug_mask_path = annotations_folder / f"{file_stem}{suffix}.npy"
+                # 증강된 파일을 data_augments 폴더에 저장
+                aug_img_0_path = output_folder_0 / f"{file_stem}{suffix}.jpg"
+                aug_img_1_path = output_folder_1 / f"{file_stem}{suffix}.jpg"
+                aug_mask_path = output_annotations_folder / f"{file_stem}{suffix}.npy"
                 
                 try:
                     aug_img_0.save(aug_img_0_path, quality=95)
@@ -222,22 +224,143 @@ def process_dataset(data_dir='data'):
                     np.save(aug_mask_path, aug_mask)
                     total_augmented += 1
                 except Exception as e:
-                    print(f"    오류: {file_stem}{suffix} 저장 실패 - {e}")
+                    print(f"  오류: {file_stem}{suffix} 저장 실패 - {e}")
         
-        print(f"  완료: {dataset_folder.name}")
-    
-    print(f"\n=== 증강 완료 ===")
-    print(f"원본 이미지 수: {total_images}")
-    print(f"생성된 증강 데이터 수: {total_augmented}")
-    print(f"예상 총 데이터 수: {total_images * len(aug_combinations)} = {total_images} × {len(aug_combinations)}")
+        print(f"\n=== 증강 완료 ===")
+        print(f"원본 이미지 수: {total_images}")
+        print(f"생성된 증강 데이터 수: {total_augmented}")
+        print(f"증강 데이터 저장 위치: {output_path}")
+        print(f"예상 총 데이터 수: {total_images * len(aug_combinations)} = {total_images} × {len(aug_combinations)}")
+        
+    else:
+        # 중첩 구조인 경우 (기존 로직)
+        print("중첩 구조 감지: data_dir/데이터셋명/0, data_dir/데이터셋명/1")
+        
+        # 모든 데이터셋 폴더 찾기
+        dataset_folders = [d for d in data_path.iterdir() 
+                          if d.is_dir() and (d / '0').exists() and (d / '1').exists()]
+        
+        if not dataset_folders:
+            print(f"오류: {data_dir}에 데이터셋 폴더를 찾을 수 없습니다.")
+            return
+        
+        print(f"총 {len(dataset_folders)}개의 데이터셋을 찾았습니다.")
+        
+        # 증강 조합 생성
+        aug_combinations = generate_augmentation_combinations()
+        print(f"각 이미지당 {len(aug_combinations)}개의 증강 데이터를 생성합니다.")
+        
+        total_images = 0
+        total_augmented = 0
+        
+        # 각 데이터셋 처리
+        for dataset_folder in dataset_folders:
+            print(f"\n처리 중: {dataset_folder.name}")
+            
+            folder_0 = dataset_folder / '0'
+            folder_1 = dataset_folder / '1'
+            annotations_folder = dataset_folder / 'annotations'
+            
+            if not annotations_folder.exists():
+                print(f"  경고: {annotations_folder} 폴더를 찾을 수 없습니다. 건너뜁니다.")
+                continue
+            
+            # 출력 폴더 구조 생성 (data_augments/데이터셋명/0, 1, annotations)
+            output_dataset_folder = output_path / dataset_folder.name
+            output_folder_0 = output_dataset_folder / '0'
+            output_folder_1 = output_dataset_folder / '1'
+            output_annotations_folder = output_dataset_folder / 'annotations'
+            
+            output_folder_0.mkdir(parents=True, exist_ok=True)
+            output_folder_1.mkdir(parents=True, exist_ok=True)
+            output_annotations_folder.mkdir(parents=True, exist_ok=True)
+            
+            # 0 폴더의 모든 jpg 파일 찾기
+            jpg_files = list(folder_0.glob('*.jpg'))
+            
+            if not jpg_files:
+                print(f"  경고: {folder_0}에 jpg 파일을 찾을 수 없습니다.")
+                continue
+            
+            print(f"  {len(jpg_files)}개의 이미지 파일 발견")
+            
+            # 각 이미지 처리
+            for jpg_file in tqdm(jpg_files, desc=f"  {dataset_folder.name}"):
+                file_stem = jpg_file.stem  # 파일명에서 확장자 제거 (예: '0000000')
+                
+                # 원본 이미지 파일 경로
+                img_0_path = folder_0 / f"{file_stem}.jpg"
+                img_1_path = folder_1 / f"{file_stem}.jpg"
+                mask_path = annotations_folder / f"{file_stem}.npy"
+                
+                # 파일 존재 확인
+                if not img_0_path.exists():
+                    print(f"    경고: {img_0_path}를 찾을 수 없습니다.")
+                    continue
+                if not img_1_path.exists():
+                    print(f"    경고: {img_1_path}를 찾을 수 없습니다.")
+                    continue
+                if not mask_path.exists():
+                    print(f"    경고: {mask_path}를 찾을 수 없습니다.")
+                    continue
+                
+                # 이미지와 마스크 로드
+                try:
+                    img_0 = Image.open(img_0_path)
+                    img_1 = Image.open(img_1_path)
+                    mask = np.load(mask_path)
+                except Exception as e:
+                    print(f"    오류: {file_stem} 파일 로드 실패 - {e}")
+                    continue
+                
+                total_images += 1
+                
+                # 각 증강 조합에 대해 처리
+                for rotation, flip_lr, flip_ud in aug_combinations:
+                    # 증강 적용
+                    aug_img_0, aug_mask = augment_image_and_mask(
+                        img_0, mask, rotation, flip_lr, flip_ud
+                    )
+                    aug_img_1, _ = augment_image_and_mask(
+                        img_1, mask, rotation, flip_lr, flip_ud
+                    )
+                    
+                    # 파일명 접미사 생성
+                    suffix = get_augmentation_suffix(rotation, flip_lr, flip_ud)
+                    
+                    # 원본인 경우 (rotation=0, flip_lr=False, flip_ud=False)
+                    # 원본은 원래 위치에 그대로 두고, data_augments에는 저장하지 않음
+                    if suffix == "_aug0":
+                        continue
+                    
+                    # 증강된 파일을 data_augments 폴더에 저장
+                    aug_img_0_path = output_folder_0 / f"{file_stem}{suffix}.jpg"
+                    aug_img_1_path = output_folder_1 / f"{file_stem}{suffix}.jpg"
+                    aug_mask_path = output_annotations_folder / f"{file_stem}{suffix}.npy"
+                    
+                    try:
+                        aug_img_0.save(aug_img_0_path, quality=95)
+                        aug_img_1.save(aug_img_1_path, quality=95)
+                        np.save(aug_mask_path, aug_mask)
+                        total_augmented += 1
+                    except Exception as e:
+                        print(f"    오류: {file_stem}{suffix} 저장 실패 - {e}")
+            
+            print(f"  완료: {dataset_folder.name}")
+        
+        print(f"\n=== 증강 완료 ===")
+        print(f"원본 이미지 수: {total_images}")
+        print(f"생성된 증강 데이터 수: {total_augmented}")
+        print(f"증강 데이터 저장 위치: {output_path}")
+        print(f"예상 총 데이터 수: {total_images * len(aug_combinations)} = {total_images} × {len(aug_combinations)}")
 
 
 if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='데이터 증강 스크립트')
-    parser.add_argument('--data_dir', type=str, default='data',
-                       help='데이터 디렉토리 경로 (기본값: data)')
+    parser.add_argument('--data_dir', type=str, default='data_test',
+                       help='데이터 디렉토리 경로 (기본값: data_test)')
     
     args = parser.parse_args()
     

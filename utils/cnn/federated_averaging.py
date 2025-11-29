@@ -188,11 +188,32 @@ def federated_averaging(model,
         print('Evaluating Test Set Performance...')
         model.eval()
         with torch.no_grad():
-            testOutputs = model(testImages)
-            test_loss = criterion(testOutputs, testLabels).item()
-            _, testPredicted = torch.max(testOutputs.data, 1)
-            test_total = testLabels.size(0)
-            test_correct = (testPredicted == testLabels).sum().item()
+            # 배치 단위로 처리하여 BatchNorm이 제대로 작동하도록 함
+            # TensorFlow의 evaluate()와 동일한 방식으로 처리
+            test_losses = []
+            test_correct = 0
+            test_total = 0
+            
+            # DataLoader를 사용하여 배치 단위로 처리
+            testDataset = torch.utils.data.TensorDataset(testImages, testLabels)
+            testLoader = torch.utils.data.DataLoader(
+                testDataset, batch_size=LOCAL_BATCH_SIZE, shuffle=False
+            )
+            
+            for batch_images, batch_labels in testLoader:
+                batch_images = batch_images.to(device)
+                batch_labels = batch_labels.to(device)
+                
+                batch_outputs = model(batch_images)
+                batch_loss = criterion(batch_outputs, batch_labels)
+                test_losses.append(batch_loss.item())
+                
+                _, batch_predicted = torch.max(batch_outputs.data, 1)
+                test_total += batch_labels.size(0)
+                test_correct += (batch_predicted == batch_labels).sum().item()
+            
+            # 평균 손실 계산
+            test_loss = sum(test_losses) / len(test_losses)
             test_accuracy = 100 * test_correct / test_total
         
         testLoss.append(test_loss)

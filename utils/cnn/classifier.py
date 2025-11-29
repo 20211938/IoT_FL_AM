@@ -2,9 +2,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 class CNNClassifier(nn.Module):
     '''
-    PyTorch 기반 CNN 모델 for defect type classification
+    PyTorch 기반 CNN 모델 for defect type classification (BatchNorm 제거 버전)
     '''
     def __init__(self, num_classes, input_channels=2):
         super(CNNClassifier, self).__init__()
@@ -13,31 +17,26 @@ class CNNClassifier(nn.Module):
         self.conv1_1 = nn.Conv2d(input_channels, 32, 3, padding=1)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=1)
         self.pool1 = nn.MaxPool2d(2, 2)
-        self.bn1 = nn.BatchNorm2d(32)
         
         # 두 번째 Conv 블록
         self.conv2_1 = nn.Conv2d(32, 64, 3, padding=1)
         self.conv2_2 = nn.Conv2d(64, 64, 3, padding=1)
         self.pool2 = nn.MaxPool2d(2, 2)
-        self.bn2 = nn.BatchNorm2d(64)
         
         # 세 번째 Conv 블록
         self.conv3_1 = nn.Conv2d(64, 128, 3, padding=1)
         self.conv3_2 = nn.Conv2d(128, 128, 3, padding=1)
         self.pool3 = nn.MaxPool2d(2, 2)
-        self.bn3 = nn.BatchNorm2d(128)
         
         # 네 번째 Conv 블록
         self.conv4_1 = nn.Conv2d(128, 256, 3, padding=1)
         self.conv4_2 = nn.Conv2d(256, 256, 3, padding=1)
         self.pool4 = nn.MaxPool2d(2, 2)
-        self.bn4 = nn.BatchNorm2d(256)
         
         # 다섯 번째 Conv 블록
         self.conv5_1 = nn.Conv2d(256, 512, 3, padding=1)
         self.conv5_2 = nn.Conv2d(512, 512, 3, padding=1)
         self.pool5 = nn.MaxPool2d(2, 2)
-        self.bn5 = nn.BatchNorm2d(512)
         
         # Global Average Pooling
         self.gap = nn.AdaptiveAvgPool2d(1)
@@ -54,31 +53,26 @@ class CNNClassifier(nn.Module):
         x = F.relu(self.conv1_1(x))
         x = F.relu(self.conv1_2(x))
         x = self.pool1(x)
-        x = self.bn1(x)
         
         # 두 번째 Conv 블록
         x = F.relu(self.conv2_1(x))
         x = F.relu(self.conv2_2(x))
         x = self.pool2(x)
-        x = self.bn2(x)
         
         # 세 번째 Conv 블록
         x = F.relu(self.conv3_1(x))
         x = F.relu(self.conv3_2(x))
         x = self.pool3(x)
-        x = self.bn3(x)
         
         # 네 번째 Conv 블록
         x = F.relu(self.conv4_1(x))
         x = F.relu(self.conv4_2(x))
         x = self.pool4(x)
-        x = self.bn4(x)
         
         # 다섯 번째 Conv 블록
         x = F.relu(self.conv5_1(x))
         x = F.relu(self.conv5_2(x))
         x = self.pool5(x)
-        x = self.bn5(x)
         
         # Global Average Pooling
         x = self.gap(x)
@@ -92,6 +86,8 @@ class CNNClassifier(nn.Module):
         x = self.fc3(x)
         
         return x
+
+# 나머지 함수들(initialize_cnn_classifier, load_cnn_model, save_cnn_model)은 동일
 
 
 def initialize_cnn_classifier(num_classes, input_channels=2, device=None):

@@ -16,3 +16,5 @@ tqdm
 scikit-learn
 python-dotenv
 typing-extensions==4.8.0
+albumentations==1.3.1
+scikit-learn==1.5.2

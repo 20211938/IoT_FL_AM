@@ -3,7 +3,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from copy import deepcopy
+import os
 from utils.cnn.dataset_functions import unwrap_client_data
+from utils.cnn.classifier import save_cnn_model
 
 
 def federated_averaging(model,
@@ -14,7 +16,8 @@ def federated_averaging(model,
                         testImages, testLabels,
                         num_classes,
                         device=None,
-                        early_stopping_accuracy=None):
+                        early_stopping_accuracy=None,
+                        start_round=0):  # 추가: 시작 라운드 번호
     """
     PyTorch 기반 FedAvg 알고리즘 실행
     
@@ -31,6 +34,8 @@ def federated_averaging(model,
         testLabels: 테스트 레이블 텐서
         num_classes: 총 클래스 수
         device: PyTorch device
+        early_stopping_accuracy: 조기 종료 정확도
+        start_round: 시작 라운드 번호 (추가 학습 시 사용)
     
     Returns:
         model: 학습된 모델
@@ -65,7 +70,17 @@ def federated_averaging(model,
     # 서버 가중치 초기화
     serverStateDict = deepcopy(model.state_dict())
     
-    for round_num in range(SERVER_ROUNDS):
+    # 모델 저장 폴더 생성
+    model_save_dir = 'cnn_models'
+    os.makedirs(model_save_dir, exist_ok=True)
+    
+    # 추가 학습인 경우 메시지 출력
+    if start_round > 0:
+        print(f"=" * 60)
+        print(f"추가 학습 모드: 라운드 {start_round}부터 시작합니다.")
+        print(f"=" * 60)
+    
+    for round_num in range(start_round, SERVER_ROUNDS):
         print('=' * 60)
         print(f'------ Server Round {round_num} ------')
         print('=' * 60)
@@ -222,6 +237,11 @@ def federated_averaging(model,
         
         print(f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.2f}%')
         print('Done...\n')
+        
+        # 서버 라운드마다 모델 저장
+        model_save_path = os.path.join(model_save_dir, f'round_{round_num}.pth')
+        save_cnn_model(model, model_save_path, num_classes=num_classes)
+        print(f'모델이 {model_save_path}에 저장되었습니다.\n')
 
         if early_stopping_accuracy is not None and test_accuracy >= early_stopping_accuracy:
             print(f'=' * 60)

@@ -6,36 +6,50 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# utils/cnn/classifier.py의 CNNClassifier 클래스 수정 제안
+
+import torch.nn as nn
+
 class CNNClassifier(nn.Module):
     '''
-    PyTorch 기반 CNN 모델 for defect type classification (BatchNorm 제거 버전)
+    PyTorch 기반 CNN 모델 for defect type classification (GroupNorm 사용 버전)
     '''
-    def __init__(self, num_classes, input_channels=2):
+    def __init__(self, num_classes, input_channels=2, num_groups=32):
         super(CNNClassifier, self).__init__()
         
         # 첫 번째 Conv 블록
         self.conv1_1 = nn.Conv2d(input_channels, 32, 3, padding=1)
+        self.gn1_1 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=32)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=1)
+        self.gn1_2 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=32)
         self.pool1 = nn.MaxPool2d(2, 2)
         
         # 두 번째 Conv 블록
         self.conv2_1 = nn.Conv2d(32, 64, 3, padding=1)
+        self.gn2_1 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=64)
         self.conv2_2 = nn.Conv2d(64, 64, 3, padding=1)
+        self.gn2_2 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=64)
         self.pool2 = nn.MaxPool2d(2, 2)
         
         # 세 번째 Conv 블록
         self.conv3_1 = nn.Conv2d(64, 128, 3, padding=1)
+        self.gn3_1 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=128)
         self.conv3_2 = nn.Conv2d(128, 128, 3, padding=1)
+        self.gn3_2 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=128)
         self.pool3 = nn.MaxPool2d(2, 2)
         
         # 네 번째 Conv 블록
         self.conv4_1 = nn.Conv2d(128, 256, 3, padding=1)
+        self.gn4_1 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=256)
         self.conv4_2 = nn.Conv2d(256, 256, 3, padding=1)
+        self.gn4_2 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=256)
         self.pool4 = nn.MaxPool2d(2, 2)
         
         # 다섯 번째 Conv 블록
         self.conv5_1 = nn.Conv2d(256, 512, 3, padding=1)
+        self.gn5_1 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=512)
         self.conv5_2 = nn.Conv2d(512, 512, 3, padding=1)
+        self.gn5_2 = nn.GroupNorm(num_groups=min(32, num_groups), num_channels=512)
         self.pool5 = nn.MaxPool2d(2, 2)
         
         # Global Average Pooling
@@ -50,28 +64,28 @@ class CNNClassifier(nn.Module):
     
     def forward(self, x):
         # 첫 번째 Conv 블록
-        x = F.relu(self.conv1_1(x))
-        x = F.relu(self.conv1_2(x))
+        x = F.relu(self.gn1_1(self.conv1_1(x)))
+        x = F.relu(self.gn1_2(self.conv1_2(x)))
         x = self.pool1(x)
         
         # 두 번째 Conv 블록
-        x = F.relu(self.conv2_1(x))
-        x = F.relu(self.conv2_2(x))
+        x = F.relu(self.gn2_1(self.conv2_1(x)))
+        x = F.relu(self.gn2_2(self.conv2_2(x)))
         x = self.pool2(x)
         
         # 세 번째 Conv 블록
-        x = F.relu(self.conv3_1(x))
-        x = F.relu(self.conv3_2(x))
+        x = F.relu(self.gn3_1(self.conv3_1(x)))
+        x = F.relu(self.gn3_2(self.conv3_2(x)))
         x = self.pool3(x)
         
         # 네 번째 Conv 블록
-        x = F.relu(self.conv4_1(x))
-        x = F.relu(self.conv4_2(x))
+        x = F.relu(self.gn4_1(self.conv4_1(x)))
+        x = F.relu(self.gn4_2(self.conv4_2(x)))
         x = self.pool4(x)
         
         # 다섯 번째 Conv 블록
-        x = F.relu(self.conv5_1(x))
-        x = F.relu(self.conv5_2(x))
+        x = F.relu(self.gn5_1(self.conv5_1(x)))
+        x = F.relu(self.gn5_2(self.conv5_2(x)))
         x = self.pool5(x)
         
         # Global Average Pooling

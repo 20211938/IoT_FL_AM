@@ -6,3 +6,5 @@ data_train/
 dataset_augmented/  
 
 venv311/
+visualizations/
+patch_cnn_models/

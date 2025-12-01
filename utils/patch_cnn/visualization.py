@@ -68,7 +68,7 @@ def visualize_test_results(
     subdivide_small_images=True  # 이제 사용되지 않음
 ):
     """
-    저장된 모델로 테스트 데이터를 시각화
+    저장된 모델로 테스트 데이터를 시각화하고 정확도를 계산
     이미지를 항상 9등분(3x3 그리드)으로 나누어 처리
     """
     import torch
@@ -76,9 +76,11 @@ def visualize_test_results(
     import matplotlib.pyplot as plt
     from pathlib import Path
     from PIL import Image
+    from collections import defaultdict
+    from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
     from utils.patch_cnn.classifier import load_defect_classifier
     from utils.patch_cnn.dataset_functions import (
-        load_image_for_patch, create_patches_9grid, 
+        load_image_for_patch, create_patches_adaptive_grid, 
         get_albumentations_transform, get_label_mapping
     )
     
@@ -159,6 +161,12 @@ def visualize_test_results(
     # 증강 없는 transform (테스트용)
     test_transform = get_albumentations_transform(is_training=False)
     
+    # 정확도 계산을 위한 변수 초기화
+    all_true_labels = []
+    all_pred_labels = []
+    all_file_names = []
+    all_patch_confidences = []
+    
     # 각 이미지에 대해 시각화
     for file_idx, file_name in enumerate(all_files):
         img0_path = image_path0 / f"{file_name}.jpg"
@@ -189,7 +197,7 @@ def visualize_test_results(
         original_image = image[:, :, 0]
         
         # 이미지를 9등분(3x3 그리드)으로 나누기
-        patches, positions, patch_sizes = create_patches_9grid(image)
+        patches, positions, patch_sizes = create_patches_adaptive_grid(image)
         
         # 모든 패치를 동일한 크기로 맞추기 (가장 큰 패치 크기 사용)
         max_patch_h = max(ph for ph, pw in patch_sizes)
@@ -198,6 +206,7 @@ def visualize_test_results(
         # 각 패치에 대해 모델 예측
         patch_predictions = []
         patch_confidences = []
+        patch_true_labels = []
         
         with torch.no_grad():
             for patch, (y_start, x_start), (patch_h, patch_w) in zip(patches, positions, patch_sizes):
@@ -205,6 +214,26 @@ def visualize_test_results(
                 padded_patch = np.zeros((max_patch_h, max_patch_w, patch.shape[2]), dtype=patch.dtype)
                 padded_patch[:patch.shape[0], :patch.shape[1], :] = patch
                 patch = padded_patch
+                
+                # 패치에 해당하는 실제 마스크 영역 추출
+                y_end = min(y_start + patch_h, h)
+                x_end = min(x_start + patch_w, w)
+                patch_mask = mask[y_start:y_end, x_start:x_end]
+                
+                # 패치의 실제 레이블 결정 (결함 유형 중 가장 많이 차지하는 것)
+                patch_defects = patch_mask[(patch_mask != 0) & (patch_mask != 1) & (patch_mask != -1)]
+                
+                if len(patch_defects) > 0:
+                    # 결함이 있는 경우: 가장 많은 결함 유형을 실제 레이블로 사용
+                    unique, counts = np.unique(patch_defects, return_counts=True)
+                    dominant_defect = unique[np.argmax(counts)]
+                    if dominant_defect in defect_only_label_mapping:
+                        true_label_idx = defect_only_label_mapping[dominant_defect]
+                    else:
+                        true_label_idx = None  # 알 수 없는 결함 유형
+                else:
+                    # 결함이 없는 경우: None으로 표시 (정상 영역)
+                    true_label_idx = None
                 
                 # 패치를 텐서로 변환
                 patch_uint8 = (patch * 255).astype(np.uint8)
@@ -219,23 +248,42 @@ def visualize_test_results(
                 
                 patch_predictions.append(pred_class)
                 patch_confidences.append(confidence)
+                patch_true_labels.append(true_label_idx)
+                
+                # 정확도 계산을 위해 레이블 저장 (결함이 있는 패치만)
+                if true_label_idx is not None:
+                    all_true_labels.append(true_label_idx)
+                    all_pred_labels.append(pred_class)
+                    all_file_names.append(file_name)
+                    all_patch_confidences.append(confidence)
         
         # 예측 결과를 전체 이미지 크기로 재구성
         prediction_map = np.zeros((h, w), dtype=np.int32) - 1  # -1은 예측 없음
         confidence_map = np.zeros((h, w), dtype=np.float32)
         
-        for idx, ((y_start, x_start), pred_class, confidence, (patch_h, patch_w)) in enumerate(
-            zip(positions, patch_predictions, patch_confidences, patch_sizes)
+        for idx, ((y_start, x_start), pred_class, confidence, (patch_h, patch_w), true_label) in enumerate(
+            zip(positions, patch_predictions, patch_confidences, patch_sizes, patch_true_labels)
         ):
             # 실제 패치 크기 사용 (패딩 전 크기)
             y_end = min(y_start + patch_h, h)
             x_end = min(x_start + patch_w, w)
             
-            # 전체 패치에 동일한 예측값 적용
-            if pred_class < len(reverse_mapping):
+            # 결함이 있는 패치만 색칠 (정상 패치는 색칠하지 않음)
+            if true_label is not None and pred_class < len(reverse_mapping):
                 original_defect_value = reverse_mapping[pred_class]
                 prediction_map[y_start:y_end, x_start:x_end] = original_defect_value
                 confidence_map[y_start:y_end, x_start:x_end] = confidence
+        
+        # 이미지별 정확도 계산
+        image_true = [lbl for lbl in patch_true_labels if lbl is not None]
+        image_pred = [patch_predictions[i] for i, lbl in enumerate(patch_true_labels) if lbl is not None]
+        
+        if len(image_true) > 0:
+            image_accuracy = 100 * sum(1 for t, p in zip(image_true, image_pred) if t == p) / len(image_true)
+            print(f"  이미지 정확도: {image_accuracy:.2f}% ({len(image_true)}개 결함 패치 중 {sum(1 for t, p in zip(image_true, image_pred) if t == p)}개 정확)")
+        else:
+            image_accuracy = None  # 결함 패치가 없는 경우
+            print(f"  결함 패치 없음 (정상 이미지)")
         
         # 실제 마스크에서 결함 유형 추출
         unique_defects = np.unique(mask)
@@ -275,7 +323,10 @@ def visualize_test_results(
         predicted_defects = np.unique(prediction_map[prediction_map >= 0])
         predicted_text = ", ".join([f"결함 {int(d)}" for d in predicted_defects if d in reverse_mapping.values()]) if len(predicted_defects) > 0 else "결함 없음"
         
-        axes[1].set_title(f'원본 이미지 + 모델 예측 결과 (9등분)\n예측된 결함: {predicted_text}', fontsize=14, fontweight='bold')
+        # 정확도 정보를 제목에 추가
+        accuracy_text = f"정확도: {image_accuracy:.2f}%" if image_accuracy is not None else "정상 이미지"
+        axes[1].set_title(f'원본 이미지 + 모델 예측 결과 (9등분)\n예측된 결함: {predicted_text}\n{accuracy_text}', 
+                         fontsize=14, fontweight='bold')
         axes[1].axis('off')
         
         # 범례 추가
@@ -291,9 +342,72 @@ def visualize_test_results(
             axes[1].legend(handles=legend_elements, loc='upper right', fontsize=10)
         
         plt.tight_layout()
-        plt.savefig(output_path / f'visualization_{file_name}.png', dpi=150, bbox_inches='tight')
+        # Windows 호환성을 위해 Path 객체를 문자열로 변환
+        save_path = str(output_path / f'visualization_{file_name}.png')
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
         plt.close()
         
-        print(f"  저장 완료: {output_path}/visualization_{file_name}.png")
+        print(f"  저장 완료: {save_path}")
+    
+    # 전체 정확도 계산 및 출력
+    if len(all_true_labels) > 0:
+        print("\n" + "="*60)
+        print("전체 테스트 결과 정확도")
+        print("="*60)
+        
+        overall_accuracy = 100 * accuracy_score(all_true_labels, all_pred_labels)
+        print(f"\n전체 정확도: {overall_accuracy:.2f}%")
+        print(f"총 평가 패치 수: {len(all_true_labels)}개")
+        
+        # 실제 데이터에 나타난 클래스만 추출
+        unique_true_labels = sorted(set(all_true_labels))
+        unique_pred_labels = sorted(set(all_pred_labels))
+        actual_classes = sorted(set(unique_true_labels + unique_pred_labels))
+        
+        # 클래스별 정확도
+        print("\n클래스별 성능:")
+        print(classification_report(
+            all_true_labels, 
+            all_pred_labels,
+            labels=actual_classes,  # 실제 나타난 클래스만 지정
+            target_names=[f'결함 {defect_classes[idx]}' for idx in actual_classes],
+            digits=4
+        ))
+        
+        # Confusion Matrix 출력
+        cm = confusion_matrix(all_true_labels, all_pred_labels, labels=actual_classes)
+        print("\nConfusion Matrix:")
+        print("실제 \\ 예측", end="")
+        for idx in actual_classes:
+            print(f"\t결함{defect_classes[idx]}", end="")
+        print()
+        for i, true_label_idx in enumerate(actual_classes):
+            print(f"결함{defect_classes[true_label_idx]}", end="")
+            for j, pred_label_idx in enumerate(actual_classes):
+                # confusion_matrix의 인덱스는 actual_classes의 순서를 따름
+                cm_row_idx = actual_classes.index(true_label_idx)
+                cm_col_idx = actual_classes.index(pred_label_idx)
+                print(f"\t{cm[cm_row_idx, cm_col_idx]}", end="")
+            print()
+        
+        # 평균 신뢰도
+        avg_confidence = np.mean(all_patch_confidences)
+        print(f"\n평균 예측 신뢰도: {avg_confidence:.4f}")
+        
+        # 파일별 정확도 요약
+        file_accuracy_dict = defaultdict(lambda: {'correct': 0, 'total': 0})
+        for file_name, true_lbl, pred_lbl in zip(all_file_names, all_true_labels, all_pred_labels):
+            file_accuracy_dict[file_name]['total'] += 1
+            if true_lbl == pred_lbl:
+                file_accuracy_dict[file_name]['correct'] += 1
+        
+        print("\n파일별 정확도 (상위 10개):")
+        file_accuracies = [(file_name, 100 * stats['correct'] / stats['total']) 
+                          for file_name, stats in file_accuracy_dict.items()]
+        file_accuracies.sort(key=lambda x: x[1], reverse=True)
+        for file_name, acc in file_accuracies[:10]:
+            print(f"  {file_name}: {acc:.2f}%")
+    else:
+        print("\n결함 패치를 찾을 수 없어 정확도를 계산할 수 없습니다.")
     
     print(f"\n모든 시각화 완료! 결과는 {output_path} 폴더에 저장되었습니다.")

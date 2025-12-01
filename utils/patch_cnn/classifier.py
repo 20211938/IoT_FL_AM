@@ -121,3 +121,23 @@ def load_defect_classifier(model_path, num_classes=None, device=None):
     model.eval()
     
     return model
+
+def save_patch_cnn_model(model, model_path, num_classes=None):
+    """
+    결함 분류 모델 저장
+    
+    Args:
+        model: 저장할 모델
+        model_path: 저장 경로
+        num_classes: 클래스 수 (None이면 모델에서 자동 추출)
+    """
+    if num_classes is None:
+        # 모델의 FC 레이어에서 클래스 수 추출
+        num_classes = model.fc.out_features
+    
+    checkpoint = {
+        'model_state_dict': model.state_dict(),
+        'num_classes': num_classes
+    }
+    torch.save(checkpoint, model_path)
+    print(f"모델이 {model_path}에 저장되었습니다.")

@@ -114,84 +114,6 @@ graph LR
   - `1`: 파트 (정상, 결함 아님)
   - `-1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `11`, `14`, `255` 등: 결함 유형
 
-## 프로젝트 구조
-
-### 디렉토리 구조
-
-```
-IoT_FL_AM/
-├── PatchBased_CNN_Learning.ipynb    # Patch-based CNN 학습 노트북 (메인)
-├── U_net_Federated_Learning.ipynb   # U-Net 연합 학습 노트북
-├── requirements.txt                  # 필수 패키지 목록
-├── README.md                         # 프로젝트 문서
-├── utils/
-│   ├── patch_cnn/                    # Patch-based CNN 모듈
-│   │   ├── classifier.py             # ResNet-18 분류기 모델
-│   │   ├── dataset_functions.py      # 패치 생성 및 데이터셋 함수
-│   │   ├── federated_averaging.py    # 연합 학습 (FedAvg) 구현
-│   │   └── visualization.py          # 학습 곡선 및 결과 시각화
-│   ├── u_net/                        # U-Net 모듈
-│   │   ├── unet.py                   # U-Net 모델 정의
-│   │   ├── dataset_functions.py      # U-Net 데이터셋 함수
-│   │   ├── federated_averaging.py    # U-Net 연합 학습
-│   │   ├── image_processing.py       # 이미지 전처리
-│   │   └── visualization.py          # U-Net 결과 시각화
-│   ├── dataset/                      # 데이터 전처리 및 유틸리티
-│   │   ├── convert_tif_to_jpg.py     # TIF -> JPG 변환
-│   │   ├── data_augmentation.py      # 데이터 증강
-│   │   ├── merge_data_files.py       # 데이터 파일 병합
-│   │   ├── remove_large_images.py    # 대용량 이미지 제거
-│   │   └── visualize_masks.py        # 마스크 시각화
-│   └── analyze_defect.py             # 결함 데이터 분석 스크립트
-├── data_train/                       # 학습 데이터
-│   ├── 0/                            # Post Spreading 이미지
-│   ├── 1/                            # Post Fusion 이미지
-│   └── annotations/                  # 원본 마스크 파일 (.npy)
-├── data_test/                        # 테스트 데이터
-├── dataset/                          # 원본 데이터셋 (다중 재료)
-│   ├── 17-4_PH_Strainless_Steel/
-│   ├── FormUp_350_Maraging_Steel/
-│   ├── GammaPrint-700/
-│   └── ...
-├── saved_models/                     # 저장된 모델
-│   ├── Defect_Classifier_FL_*.pth    # Patch CNN 모델
-│   └── FL_*.h5                       # U-Net 모델
-├── patch_cnn_models/                 # 학습 중 저장되는 Patch CNN 모델
-│   └── round_*.pth                   # 각 라운드별 모델
-└── visualizations/                   # 시각화 결과
-```
-
-### 주요 모듈 설명
-
-#### Patch-based CNN 모듈 (`utils/patch_cnn/`)
-
-- **`classifier.py`**: ResNet-18 기반 결함 유형 분류 모델
-  - ImageNet 사전 학습 가중치 사용
-  - 2채널 입력 지원 (Post Spreading + Post Fusion)
-  - Backbone freeze/unfreeze 전략 지원
-
-- **`dataset_functions.py`**: 패치 데이터셋 생성 및 전처리
-  - 이미지를 3x3 그리드로 분할
-  - 결함 패치 선별 및 레이블 생성
-  - Albumentations 기반 데이터 증강
-
-- **`federated_averaging.py`**: 연합 학습 구현
-  - FedAvg 알고리즘
-  - 분산 평가 방식 (각 클라이언트가 자신의 테스트 데이터로 평가)
-  - Train/Val/Test 분할 (60%/20%/20%)
-
-- **`visualization.py`**: 학습 결과 시각화
-  - 학습 곡선 (Loss, Accuracy)
-  - 클라이언트별 성능 비교
-  - 패치 단위 예측 결과 시각화
-
-#### U-Net 모듈 (`utils/u_net/`)
-
-- **`unet.py`**: U-Net 모델 정의 (TensorFlow/Keras)
-- **`dataset_functions.py`**: U-Net 데이터셋 생성
-- **`federated_averaging.py`**: U-Net 연합 학습
-- **`image_processing.py`**: 이미지 전처리 및 리사이즈
-- **`visualization.py`**: U-Net 결과 시각화
 
 ## 워크플로우
 
@@ -332,3 +254,83 @@ data_train/
 - **GPU 권장**: CUDA 지원 GPU 사용 시 학습 속도가 크게 향상됩니다
 - **메모리 관리**: 대용량 이미지 처리 시 메모리 사용량을 고려해야 합니다
 - **데이터 분산**: 연합 학습을 위해 데이터를 여러 클라이언트로 분산해야 합니다
+
+
+## 프로젝트 구조
+
+### 디렉토리 구조
+
+```
+IoT_FL_AM/
+├── PatchBased_CNN_Learning.ipynb    # Patch-based CNN 학습 노트북 (메인)
+├── U_net_Federated_Learning.ipynb   # U-Net 연합 학습 노트북
+├── requirements.txt                  # 필수 패키지 목록
+├── README.md                         # 프로젝트 문서
+├── utils/
+│   ├── patch_cnn/                    # Patch-based CNN 모듈
+│   │   ├── classifier.py             # ResNet-18 분류기 모델
+│   │   ├── dataset_functions.py      # 패치 생성 및 데이터셋 함수
+│   │   ├── federated_averaging.py    # 연합 학습 (FedAvg) 구현
+│   │   └── visualization.py          # 학습 곡선 및 결과 시각화
+│   ├── u_net/                        # U-Net 모듈
+│   │   ├── unet.py                   # U-Net 모델 정의
+│   │   ├── dataset_functions.py      # U-Net 데이터셋 함수
+│   │   ├── federated_averaging.py    # U-Net 연합 학습
+│   │   ├── image_processing.py       # 이미지 전처리
+│   │   └── visualization.py          # U-Net 결과 시각화
+│   ├── dataset/                      # 데이터 전처리 및 유틸리티
+│   │   ├── convert_tif_to_jpg.py     # TIF -> JPG 변환
+│   │   ├── data_augmentation.py      # 데이터 증강
+│   │   ├── merge_data_files.py       # 데이터 파일 병합
+│   │   ├── remove_large_images.py    # 대용량 이미지 제거
+│   │   └── visualize_masks.py        # 마스크 시각화
+│   └── analyze_defect.py             # 결함 데이터 분석 스크립트
+├── data_train/                       # 학습 데이터
+│   ├── 0/                            # Post Spreading 이미지
+│   ├── 1/                            # Post Fusion 이미지
+│   └── annotations/                  # 원본 마스크 파일 (.npy)
+├── data_test/                        # 테스트 데이터
+├── dataset/                          # 원본 데이터셋 (다중 재료)
+│   ├── 17-4_PH_Strainless_Steel/
+│   ├── FormUp_350_Maraging_Steel/
+│   ├── GammaPrint-700/
+│   └── ...
+├── saved_models/                     # 저장된 모델
+│   ├── Defect_Classifier_FL_*.pth    # Patch CNN 모델
+│   └── FL_*.h5                       # U-Net 모델
+├── patch_cnn_models/                 # 학습 중 저장되는 Patch CNN 모델
+│   └── round_*.pth                   # 각 라운드별 모델
+└── visualizations/                   # 시각화 결과
+```
+
+### 주요 모듈 설명
+
+#### Patch-based CNN 모듈 (`utils/patch_cnn/`)
+
+- **`classifier.py`**: ResNet-18 기반 결함 유형 분류 모델
+  - ImageNet 사전 학습 가중치 사용
+  - 2채널 입력 지원 (Post Spreading + Post Fusion)
+  - Backbone freeze/unfreeze 전략 지원
+
+- **`dataset_functions.py`**: 패치 데이터셋 생성 및 전처리
+  - 이미지를 3x3 그리드로 분할
+  - 결함 패치 선별 및 레이블 생성
+  - Albumentations 기반 데이터 증강
+
+- **`federated_averaging.py`**: 연합 학습 구현
+  - FedAvg 알고리즘
+  - 분산 평가 방식 (각 클라이언트가 자신의 테스트 데이터로 평가)
+  - Train/Val/Test 분할 (60%/20%/20%)
+
+- **`visualization.py`**: 학습 결과 시각화
+  - 학습 곡선 (Loss, Accuracy)
+  - 클라이언트별 성능 비교
+  - 패치 단위 예측 결과 시각화
+
+#### U-Net 모듈 (`utils/u_net/`)
+
+- **`unet.py`**: U-Net 모델 정의 (TensorFlow/Keras)
+- **`dataset_functions.py`**: U-Net 데이터셋 생성
+- **`federated_averaging.py`**: U-Net 연합 학습
+- **`image_processing.py`**: 이미지 전처리 및 리사이즈
+- **`visualization.py`**: U-Net 결과 시각화

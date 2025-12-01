@@ -7,14 +7,10 @@ torchaudio==2.9.0
 
 # 기타 필수 패키지
 numpy==1.25
-pandas==2.2.3
 Pillow
 matplotlib
 tensorflow
-pymongo
-tqdm
 scikit-learn
-python-dotenv
 typing-extensions==4.8.0
 albumentations==1.3.1
 scikit-learn==1.5.2

@@ -1,0 +1,573 @@
+{
+  "test_data_dir": "data_test/",
+  "unet_model": "saved_models/FL_2_5_32_8e05_HoldoutPart06_1.h5",
+  "cnn_model": "saved_models/Defect_Classifier_FL_20_10_32_1e04.pth",
+  "total_files": 78,
+  "pipeline_mode": true,
+  "detected_defect_files_count": 77,
+  "unet_results": {
+    "mean_iou": 0.5038334131240845,
+    "std_iou": 0.24026905000209808,
+    "max_iou": 0.9999998807907104,
+    "min_iou": 0.09880148619413376,
+    "successful_files": 78,
+    "defect_detected_files": 77
+  },
+  "cnn_results": {
+    "mean_accuracy": 0.8917955217297324,
+    "std_accuracy": 0.16451167900255603,
+    "max_accuracy": 1.0,
+    "min_accuracy": 0.0,
+    "total_patches": 981,
+    "successful_files": 76,
+    "processed_files_count": 77
+  },
+  "per_file_results": [
+    {
+      "file": "000001",
+      "unet_iou": 0.7727544903755188,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 14,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000002",
+      "unet_iou": 0.8821322321891785,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 11,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000003",
+      "unet_iou": 0.76239013671875,
+      "cnn_accuracy": 0.9333333333333333,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000004",
+      "unet_iou": 0.7667026519775391,
+      "cnn_accuracy": 0.8,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000005",
+      "unet_iou": 0.7929958701133728,
+      "cnn_accuracy": 0.8125,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000006",
+      "unet_iou": 0.8388523459434509,
+      "cnn_accuracy": 0.75,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000007",
+      "unet_iou": 0.7768540382385254,
+      "cnn_accuracy": 0.9333333333333333,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000008",
+      "unet_iou": 0.8179993629455566,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000009",
+      "unet_iou": 0.7926289439201355,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000010",
+      "unet_iou": 0.8585066795349121,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 13,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000011",
+      "unet_iou": 0.8375745415687561,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 13,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000012",
+      "unet_iou": 0.7660697102546692,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 13,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000013",
+      "unet_iou": 0.738138735294342,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 13,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000014",
+      "unet_iou": 0.745048999786377,
+      "cnn_accuracy": 0.6666666666666666,
+      "cnn_patch_count": 6,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000015",
+      "unet_iou": 0.11244998127222061,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000016",
+      "unet_iou": 0.11353012919425964,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000017",
+      "unet_iou": 0.13864284753799438,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000018",
+      "unet_iou": 0.16039857268333435,
+      "cnn_accuracy": 0.9375,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000019",
+      "unet_iou": 0.12409800291061401,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000020",
+      "unet_iou": 0.11238148808479309,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000021",
+      "unet_iou": 0.09880148619413376,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000022",
+      "unet_iou": 0.13193854689598083,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000023",
+      "unet_iou": 0.13995665311813354,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000024",
+      "unet_iou": 0.30935463309288025,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000025",
+      "unet_iou": 0.3075486719608307,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000026",
+      "unet_iou": 0.23614241182804108,
+      "cnn_accuracy": 0.9375,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000027",
+      "unet_iou": 0.14175109565258026,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000028",
+      "unet_iou": 0.20142018795013428,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000029",
+      "unet_iou": 0.30243614315986633,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000030",
+      "unet_iou": 0.29390856623649597,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000031",
+      "unet_iou": 0.28452906012535095,
+      "cnn_accuracy": 0.625,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000032",
+      "unet_iou": 0.17490023374557495,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000033",
+      "unet_iou": 0.1320994347333908,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000034",
+      "unet_iou": 0.25258371233940125,
+      "cnn_accuracy": 0.7142857142857143,
+      "cnn_patch_count": 14,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000035",
+      "unet_iou": 0.2127406746149063,
+      "cnn_accuracy": 0.9333333333333333,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000036",
+      "unet_iou": 0.25796157121658325,
+      "cnn_accuracy": 0.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000037",
+      "unet_iou": 0.1833457499742508,
+      "cnn_accuracy": 0.8,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000038",
+      "unet_iou": 0.2729463279247284,
+      "cnn_accuracy": 0.875,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000039",
+      "unet_iou": 0.25496235489845276,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000040",
+      "unet_iou": 0.2565302550792694,
+      "cnn_accuracy": 0.9375,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000041",
+      "unet_iou": 0.619993269443512,
+      "cnn_accuracy": 0.4,
+      "cnn_patch_count": 5,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000042",
+      "unet_iou": 0.6400061249732971,
+      "cnn_accuracy": 0.8333333333333334,
+      "cnn_patch_count": 6,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000043",
+      "unet_iou": 0.613456130027771,
+      "cnn_accuracy": 0.75,
+      "cnn_patch_count": 4,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000044",
+      "unet_iou": 0.617548406124115,
+      "cnn_accuracy": 0.8,
+      "cnn_patch_count": 5,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000045",
+      "unet_iou": 0.6127006411552429,
+      "cnn_accuracy": 0.9285714285714286,
+      "cnn_patch_count": 14,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000046",
+      "unet_iou": 0.6301541924476624,
+      "cnn_accuracy": 0.7857142857142857,
+      "cnn_patch_count": 14,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000047",
+      "unet_iou": 0.620480477809906,
+      "cnn_accuracy": 0.8,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000048",
+      "unet_iou": 0.6177954077720642,
+      "cnn_accuracy": 0.5833333333333334,
+      "cnn_patch_count": 12,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000049",
+      "unet_iou": 0.6503140926361084,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 4,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000050",
+      "unet_iou": 0.6206570267677307,
+      "cnn_accuracy": 0.875,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000051",
+      "unet_iou": 0.6341989636421204,
+      "cnn_accuracy": 0.75,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000052",
+      "unet_iou": 0.6232249140739441,
+      "cnn_accuracy": 0.5625,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000053",
+      "unet_iou": 0.4893220365047455,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000054",
+      "unet_iou": 0.5127699971199036,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000055",
+      "unet_iou": 0.32146430015563965,
+      "cnn_accuracy": null,
+      "cnn_patch_count": 0,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000056",
+      "unet_iou": 0.9999998807907104,
+      "cnn_accuracy": null,
+      "cnn_patch_count": 0,
+      "unet_defect_detected": false
+    },
+    {
+      "file": "000057",
+      "unet_iou": 0.6176109910011292,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 12,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000058",
+      "unet_iou": 0.619124174118042,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 11,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000059",
+      "unet_iou": 0.6516686081886292,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 2,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000060",
+      "unet_iou": 0.647606611251831,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 2,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000061",
+      "unet_iou": 0.662979006767273,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 2,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000062",
+      "unet_iou": 0.6449297070503235,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 2,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000063",
+      "unet_iou": 0.7391979098320007,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 5,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000064",
+      "unet_iou": 0.6099520325660706,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 10,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000065",
+      "unet_iou": 0.6209230422973633,
+      "cnn_accuracy": 0.9090909090909091,
+      "cnn_patch_count": 11,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000066",
+      "unet_iou": 0.6413915753364563,
+      "cnn_accuracy": 0.8461538461538461,
+      "cnn_patch_count": 13,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000067",
+      "unet_iou": 0.6284539699554443,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 12,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000068",
+      "unet_iou": 0.6140716075897217,
+      "cnn_accuracy": 1.0,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000069",
+      "unet_iou": 0.5751057863235474,
+      "cnn_accuracy": 0.9333333333333333,
+      "cnn_patch_count": 15,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000070",
+      "unet_iou": 0.5834431052207947,
+      "cnn_accuracy": 0.7692307692307693,
+      "cnn_patch_count": 13,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000071",
+      "unet_iou": 0.5374031662940979,
+      "cnn_accuracy": 0.9285714285714286,
+      "cnn_patch_count": 14,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000072",
+      "unet_iou": 0.5071146488189697,
+      "cnn_accuracy": 0.8571428571428571,
+      "cnn_patch_count": 14,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000073",
+      "unet_iou": 0.5957266688346863,
+      "cnn_accuracy": 0.8888888888888888,
+      "cnn_patch_count": 9,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000074",
+      "unet_iou": 0.6560415625572205,
+      "cnn_accuracy": 0.75,
+      "cnn_patch_count": 4,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000075",
+      "unet_iou": 0.5598400831222534,
+      "cnn_accuracy": 0.8571428571428571,
+      "cnn_patch_count": 7,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000076",
+      "unet_iou": 0.49090203642845154,
+      "cnn_accuracy": 0.8125,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000077",
+      "unet_iou": 0.4148358106613159,
+      "cnn_accuracy": 0.75,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    },
+    {
+      "file": "000078",
+      "unet_iou": 0.5005927085876465,
+      "cnn_accuracy": 0.75,
+      "cnn_patch_count": 16,
+      "unet_defect_detected": true
+    }
+  ]
+}

@@ -77,124 +77,203 @@ def unwrap_client_data(imageDict, maskDict, clientList):
     return unwrappedImages, unwrappedMasks
 
 
-def create_dataset_lazy(clientIdentifierDict, imagePath0, imagePath1, npyPath, tileSize=128):
+def get_augmentation_factor_by_defect_type_ratio_for_unet(
+    defect_type_ratio,
+    very_high_threshold=0.20,   # 20% 이상
+    high_threshold=0.10,        # 10% 이상
+    mid_high_threshold=0.05,    # 5% 이상
+    mid_threshold=0.02,         # 2% 이상
+    low_threshold=0.01,         # 1% 이상
+    very_high_aug_factor=1,     # 매우 높은 비율: 1배
+    high_aug_factor=2,          # 높은 비율: 2배
+    mid_high_aug_factor=3,      # 중간-높은 비율: 3배
+    mid_aug_factor=4,           # 중간 비율: 4배
+    low_aug_factor=5,           # 낮은 비율: 5배
+    very_low_aug_factor=5       # 매우 낮은 비율: 5배 (상한 고정)
+):
     '''
-    Creates a dictionary of file paths for each client (lazy loading).
-    Does not load data into memory.
-    
+    U-Net 세그멘테이션용으로 보수적으로 조정한 augmentation_factor 계산 함수.
+    - 결함 비율이 높을수록 augmentation_factor를 작게 유지
+    - 가장 희귀한 결함도 최대 5배까지만 증강
+    '''
+    if defect_type_ratio >= very_high_threshold:
+        return very_high_aug_factor
+    elif defect_type_ratio >= high_threshold:
+        return high_aug_factor
+    elif defect_type_ratio >= mid_high_threshold:
+        return mid_high_aug_factor
+    elif defect_type_ratio >= mid_threshold:
+        return mid_aug_factor
+    elif defect_type_ratio >= low_threshold:
+        return low_aug_factor
+    else:
+        return very_low_aug_factor
+
+
+def compute_defect_type_ratios_for_unet(npyPath, clientIdentifierDict):
+    '''
+    전체 마스크에서 결함 유형별 픽셀 비율 계산 (U-Net용).
+    0, 1 레이블은 정상/배경으로 보고 제외하고 나머지만 결함 타입으로 집계.
+    '''
+    defect_type_pixel_counts = {}
+    total_defect_pixels = 0
+
+    for clientID, file_list in clientIdentifierDict.items():
+        for file_name in file_list:
+            npy_file = os.path.join(npyPath, file_name + '.npy') if not npyPath.endswith('.npy') else npyPath
+            if not os.path.exists(npy_file):
+                continue
+            try:
+                mask = np.load(npy_file)
+            except Exception:
+                continue
+
+            unique_vals, counts = np.unique(mask, return_counts=True)
+            for v, c in zip(unique_vals, counts):
+                if v in [0, 1]:
+                    continue
+                defect_type_pixel_counts[int(v)] = defect_type_pixel_counts.get(int(v), 0) + int(c)
+                total_defect_pixels += int(c)
+
+    if total_defect_pixels > 0:
+        defect_type_ratios = {k: v / total_defect_pixels for k, v in defect_type_pixel_counts.items()}
+    else:
+        defect_type_ratios = {k: 0.0 for k in defect_type_pixel_counts.keys()}
+
+    print("U-Net용 결함 유형별 픽셀 비율:", defect_type_ratios)
+    return defect_type_ratios
+
+
+def random_geometric_augment_unet(image_tiles, mask_tiles):
+    '''
+    U-Net용 간단 기하학 증강 함수.
+    - 0, 90, 180, 270도 중 하나로 회전
+    - 좌우/상하 플립을 랜덤하게 적용
+    image_tiles: (N, H, W, 2)
+    mask_tiles : (N, H, W)
+    '''
+    k = tf.random.uniform([], minval=0, maxval=4, dtype=tf.int32)
+    flip_lr = tf.less(tf.random.uniform([]), 0.5)
+    flip_ud = tf.less(tf.random.uniform([]), 0.5)
+
+    imgs = image_tiles
+    masks = mask_tiles
+
+    # 회전
+    imgs = tf.image.rot90(imgs, k=k)
+    masks = tf.image.rot90(tf.expand_dims(masks, -1), k=k)
+    masks = tf.squeeze(masks, -1)
+
+    # 플립
+    def _maybe_flip_lr(x):
+        return tf.cond(flip_lr, lambda: tf.image.flip_left_right(x), lambda: x)
+
+    def _maybe_flip_ud(x):
+        return tf.cond(flip_ud, lambda: tf.image.flip_up_down(x), lambda: x)
+
+    imgs = _maybe_flip_lr(imgs)
+    masks = _maybe_flip_lr(tf.expand_dims(masks, -1))
+    masks = tf.squeeze(masks, -1)
+
+    imgs = _maybe_flip_ud(imgs)
+    masks = _maybe_flip_ud(tf.expand_dims(masks, -1))
+    masks = tf.squeeze(masks, -1)
+
+    return imgs, masks
+
+
+def create_dataset_with_augmentation(clientIdentifierDict,
+                                     imagePath0,
+                                     imagePath1,
+                                     npyPath,
+                                     tileSize=128):
+    '''
+    결함 비율 기반 보수적 증강을 포함한 U-Net용 데이터셋 생성 함수.
+
+    동작 개요:
+    1) 전체 마스크(npy)를 훑어서 결함 타입별 픽셀 비율 계산
+    2) 각 파일에서 주요 결함 타입을 찾고, 그 타입의 비율에 따라 augmentation_factor 결정
+    3) preprocess_image로 생성된 타일을 augmentation_factor만큼 랜덤 기하학 증강하여 증가
+
     Returns:
-    - filePathDict: Dictionary of file paths keyed by clientID
-    - imagePath0, imagePath1, npyPath: Paths for image loading
-    - tileSize: Tile size for preprocessing
+    - datasetImageDict: {clientID: (nTiles_aug, tileSize, tileSize, 2)}
+    - datasetMaskDict : {clientID: (nTiles_aug, tileSize, tileSize)}
     '''
-    filePathDict = {}
-    
-    for clientID in clientIdentifierDict:
-        filePathDict[clientID] = clientIdentifierDict[clientID]
-        print(f'{clientID}: {len(clientIdentifierDict[clientID])}개 파일')
-    
-    return filePathDict, imagePath0, imagePath1, npyPath, tileSize
+    datasetImageDict, datasetMaskDict = {}, {}
 
+    # 1) 전체 결함 비율 계산
+    defect_type_ratios = compute_defect_type_ratios_for_unet(npyPath, clientIdentifierDict)
 
-def load_and_preprocess_file(fileName, imagePath0, imagePath1, npyPath, tileSize):
-    '''
-    Loads and preprocesses a single file.
-    This function will be called by tf.data.Dataset.
-    '''
-    try:
-        im0 = Image.open(imagePath0 + fileName + '.jpg')
-        im1 = Image.open(imagePath1 + fileName + '.jpg')
-        segmentationMask = np.load(npyPath + fileName + '.npy')
-        
-        splitImages, splitSegmentationMask = preprocess_image(im0, im1,
-                                                              segmentationMask,
-                                                              tileSize)
-        
+    for clientID, file_list in clientIdentifierDict.items():
+        print(f'\n{clientID} (with augmentation)...')
+        clientImages_list = []
+        clientMasks_list = []
 
-        
-        return splitImages, splitSegmentationMask
-    except Exception as e:
-        print(f'  경고: {fileName} 처리 중 오류 발생: {e}')
-        # Return empty tensors with correct shape on error
-        empty_images = tf.zeros((0, tileSize, tileSize, 2), dtype=tf.float32)
-        empty_masks = tf.zeros((0, tileSize, tileSize), dtype=tf.int32)
-        return empty_images, empty_masks
+        total_files = len(file_list)
 
+        for idx, fileName in enumerate(file_list):
+            try:
+                im0_path = imagePath0 + fileName + '.jpg'
+                im1_path = imagePath1 + fileName + '.jpg'
+                npy_file = npyPath + fileName + '.npy'
 
-def create_tf_dataset(fileList, imagePath0, imagePath1, npyPath, tileSize, batch_size=32, shuffle=True):
-    '''
-    Creates a tf.data.Dataset from a list of file names.
-    Data is loaded lazily during training.
-    Returns dataset and dataset size.
-    '''
-    # Convert file list to tensor
-    fileListTensor = tf.constant(fileList, dtype=tf.string)
-    
-    # Create dataset from file names
-    dataset = tf.data.Dataset.from_tensor_slices(fileListTensor)
-    
-    # Wrapper function for loading files (captures paths in closure)
-    def load_file_wrapper(fileName):
-        # Decode the tensor to string
-        fileName_str = fileName.numpy().decode('utf-8') if isinstance(fileName, tf.Tensor) else fileName
-        images, masks = load_and_preprocess_file(fileName_str, imagePath0, imagePath1, npyPath, tileSize)
-        return images, masks
-    
-    # Use py_function to call Python function (for file I/O)
-    dataset = dataset.map(
-        lambda x: tf.py_function(
-            func=load_file_wrapper,
-            inp=[x],
-            Tout=(tf.float32, tf.int32)
-        ),
-        num_parallel_calls=tf.data.AUTOTUNE
-    )
-    
-    # Set output shapes for the dataset (important for batching)
-    dataset = dataset.map(
-        lambda images, masks: (tf.ensure_shape(images, [None, tileSize, tileSize, 2]), 
-                              tf.ensure_shape(masks, [None, tileSize, tileSize])),
-        num_parallel_calls=tf.data.AUTOTUNE
-    )
-    
-    # Unbatch to get individual tiles
-    dataset = dataset.flat_map(lambda images, masks: tf.data.Dataset.from_tensor_slices((images, masks)))
-    
-    # Shuffle if requested
-    if shuffle:
-        dataset = dataset.shuffle(buffer_size=10000)
-    
-    # Batch the dataset
-    dataset = dataset.batch(batch_size)
-    
-    # Prefetch for performance
-    dataset = dataset.prefetch(tf.data.AUTOTUNE)
-    
-    # Calculate dataset size (number of tiles)
-    dataset_size = get_dataset_size(fileList, imagePath0, imagePath1, npyPath, tileSize)
-    
-    return dataset, dataset_size
+                if (not os.path.exists(im0_path) or
+                        not os.path.exists(im1_path) or
+                        not os.path.exists(npy_file)):
+                    continue
 
+                im0 = Image.open(im0_path)
+                im1 = Image.open(im1_path)
+                raw_mask = np.load(npy_file)
 
-def get_dataset_size(fileList, imagePath0, imagePath1, npyPath, tileSize):
-    '''
-    Calculates the total number of tiles for a client without loading all data.
-    This is needed for weighted averaging in federated learning.
-    '''
-    total_tiles = 0
-    for fileName in fileList:
-        try:
-            im0 = Image.open(imagePath0 + fileName + '.jpg')
-            segmentationMask = np.load(npyPath + fileName + '.npy')
-            
-            # Calculate number of tiles
-            rightcrop = im0.size[0] // tileSize * tileSize
-            bottomcrop = im0.size[1] // tileSize * tileSize
-            n_tiles = (rightcrop // tileSize) * (bottomcrop // tileSize)
-    
-            
-            total_tiles += n_tiles
-        except Exception as e:
+                # 이 파일의 주요 결함 타입 계산 (0,1 제외)
+                defect_pixels = raw_mask[~np.isin(raw_mask, [0, 1])]
+                if defect_pixels.size == 0:
+                    main_defect_type = None
+                    defect_ratio = 0.0
+                else:
+                    unique_vals, counts = np.unique(defect_pixels, return_counts=True)
+                    main_defect_type = int(unique_vals[np.argmax(counts)])
+                    defect_ratio = defect_type_ratios.get(main_defect_type, 0.0)
+
+                augmentation_factor = get_augmentation_factor_by_defect_type_ratio_for_unet(defect_ratio)
+                augmentation_factor = max(1, int(augmentation_factor))
+
+                # 기본 타일 생성
+                base_tiles_img, base_tiles_mask = preprocess_image(im0, im1, raw_mask, tileSize)
+
+                # augmentation_factor 만큼 증강 (1회는 원본)
+                all_imgs = [base_tiles_img]
+                all_masks = [base_tiles_mask]
+
+                for _ in range(augmentation_factor - 1):
+                    aug_imgs, aug_masks = random_geometric_augment_unet(base_tiles_img, base_tiles_mask)
+                    all_imgs.append(aug_imgs)
+                    all_masks.append(aug_masks)
+
+                all_imgs = tf.concat(all_imgs, axis=0)
+                all_masks = tf.concat(all_masks, axis=0)
+
+                clientImages_list.append(all_imgs)
+                clientMasks_list.append(all_masks)
+
+                if (idx + 1) % 50 == 0 or (idx + 1) == total_files:
+                    print(f'  처리 중: {idx + 1}/{total_files} 파일 완료 '
+                          f'(현재 타일 수: {sum(t.shape[0] for t in clientImages_list)})')
+
+            except Exception as e:
+                print(f'  경고: {fileName} 증강 처리 중 오류 발생: {e}')
+                continue
+
+        if len(clientImages_list) == 0:
+            print(f'  경고: {clientID}에 유효한(또는 증강 가능한) 이미지가 없습니다.')
             continue
-    
-    return total_tiles
+
+        clientImages = tf.concat(clientImages_list, axis=0)
+        clientMasks = tf.concat(clientMasks_list, axis=0)
+
+        print(f'{clientID}: 최종 타일 수 (증강 포함) = {clientImages.shape[0]}')
+        datasetImageDict[clientID] = clientImages
+        datasetMaskDict[clientID] = clientMasks
+
+    return datasetImageDict, datasetMaskDict
